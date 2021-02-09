@@ -394,6 +394,10 @@ class Fun(commands.Cog):
             806990612003946507,
         }
 
+        roast_him_bad = {
+            807002219287019561,
+        }
+
         if member is None:
             member = choice(ctx.guild.members)
 
@@ -401,6 +405,14 @@ class Fun(commands.Cog):
             a = discord.Embed(
                 colour=discord.Color(0xE41919),
                 description="Nope, not doing that",
+            )
+
+            await ctx.send(embed=a)
+
+        if member.id in roast_him_bad:
+            a = discord.Embed(
+                colour=discord.Color(0xE41919),
+                description="<@807002219287019561> Are you javascript? You're so fucking messy, im a python",
             )
 
             await ctx.send(embed=a)
