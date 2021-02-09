@@ -63,11 +63,11 @@ class General(commands.Cog):
         embed.add_field(name="Mango Man Bot Team", value="<@564610598248120320>, and <@186713080841895936>")
         embed.add_field(
             name="discord.py",
-            value="_Code Coming Soon_",
+            value=f"[{discord.__version__}](https://github.com/Rapptz/discord.py)",
         )
         embed.add_field(
             name="About",
-            value="**Mango Man Bot** is an closed source bot(But soon will be Open Source), "
+            value="**Mango Man Bot** is an [open source bot](https://github.com/null2264/Mango-Man-Bot), "
             + "a fork of [IKY's Bot](https://github.com/AnInternetTroll/mcbeDiscordBot) "
             + "(InKY Bot) created by [xIKYx](https://github.com/xIKYx) "
             + f"but rewritten a bit.\n\n**Bot Version**: {bot_ver}",
@@ -77,6 +77,11 @@ class General(commands.Cog):
             text=f"Requested by {ctx.message.author.name}#{ctx.message.author.discriminator}"
         )
         await ctx.send(embed=embed)
+    
+    @commands.command(name="source")
+    async def _source(self, ctx):
+        """`Gives my source code repository`"""
+        await ctx.send("My source code repository: https://github.com/null2264/Mango-Man-Bot")
 
     @commands.command(aliases=["ui"], usage="[member]")
     async def userinfo(self, ctx, *, user: discord.Member = None):

@@ -76,17 +76,6 @@ version = "0.5.0.post0"
 
 [[package]]
 category = "main"
-description = "A mirror package for discord.py. Please install that instead."
-name = "discord"
-optional = false
-python-versions = "*"
-version = "1.0.1"
-
-[package.dependencies]
-"discord.py" = ">=1.0.1"
-
-[[package]]
-category = "main"
 description = "A Python wrapper for the Discord API"
 name = "discord.py"
 optional = false
@@ -228,7 +217,7 @@ idna = ">=2.0"
 multidict = ">=4.0"
 
 [metadata]
-content-hash = "42ec87338f64a7e4d2df0d492b28dc7bdfaf0e070645e761bd8eb710da5671e7"
+content-hash = "41d8ad9d51be4bc64eb4328dd597ede2193497790ae0682b68bc1d12d7b70617"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -294,10 +283,6 @@ click = [
 config = [
     {file = "config-0.5.0.post0-py2.py3-none-any.whl", hash = "sha256:73ea4a8064facc61fcba736be71996aaa7f38a564166a284628b8e8c53444f2e"},
     {file = "config-0.5.0.post0.zip", hash = "sha256:c7e48f9820758a4ddc23ae3bf10b118959f6fd06018be9eb0e1d9d5a3b227de1"},
-]
-discord = [
-    {file = "discord-1.0.1-py3-none-any.whl", hash = "sha256:9d4debb4a37845543bd4b92cb195bc53a302797333e768e70344222857ff1559"},
-    {file = "discord-1.0.1.tar.gz", hash = "sha256:ff6653655e342e7721dfb3f10421345fd852c2a33f2cca912b1c39b3778a9429"},
 ]
 "discord.py" = [
     {file = "discord.py-1.6.0-py3-none-any.whl", hash = "sha256:3df148daf6fbcc7ab5b11042368a3cd5f7b730b62f09fb5d3cbceff59bcfbb12"},
