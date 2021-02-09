@@ -340,7 +340,7 @@ class Fun(commands.Cog):
         "You're so ugly when you were born, the doctor said aww what a treasure and your mom said yeah lets bury it",
         "Maybe you should eat make-up so you’ll be pretty on the inside too",
         "When you were born, the doctor came out to the waiting room and said to your dad, I'm very sorry. We did everything we could. But he pulled through",
-        "It’s a shame you can’t Photoshop your personality",
+        "It’s a shame you can’t Photoshop your personality.",
         "Whoever told you to be yourself gave you really bad advice",
         "If you could use 100 percent of your brain's power, you'd still be incredibly stupid. 100 percent of nothing is still nothing",
         "Go ahead, tell us everything you know. It'll only take ten seconds",
