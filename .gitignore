@@ -1,3 +1,4 @@
 .env
 database.db
-*.json
+fair.json
+starboard_config.json
