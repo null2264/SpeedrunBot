@@ -90,6 +90,7 @@ class Speedrun(commands.Cog):
                                 if foundVar and foundVar[0]["is-subcategory"]:
                                     subcategoryQuery += ["var-{}={}".format(var[0], var[1])]
                                     subcategoryName += [foundVar[0]["values"]["values"][var[1]]["label"]]
+                            rank = ""
                             if catData["type"] == "per-level":
                                 categoryID = catData["id"]
                                 levelID = levData["id"]
@@ -131,7 +132,7 @@ class Speedrun(commands.Cog):
                                 timestamp=parser.isoparse(playDate)
                             )
                             a.set_author(name=f"{run['game']['data']['names']['international']} - {categoryName}")
-                            a.add_field(name="Leaderboard Rank", value=rank)
+                            a.add_field(name="Leaderboard Rank", value="Unknown" if not rank else rank)
                             a.add_field(name="Verified at", value=f"`{parser.isoparse(verifyDate)}`", inline=False)
                             a.set_thumbnail(url=cover)
 
