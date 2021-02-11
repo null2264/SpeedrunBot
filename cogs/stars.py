@@ -164,8 +164,12 @@ class Stars(commands.Cog):
             return False
 
         if not isStarred():
-            ch = self.bot.get_channel(payload.channel_id)
-            msg = await ch.fetch_message(msg_id)
+            # Get message from cache
+            msg = discord.utils.get(self.bot.cached_messages, id=msg_id)
+            # If not found, get message from discord
+            if not msg:
+                ch = self.bot.get_channel(payload.channel_id)
+                msg = await ch.fetch_message(msg_id)
             count = sum([reaction.count for reaction in msg.reactions if str(reaction) == "⭐"])
             if count >= starboard.amount:
                 await self.star_message(starboard.channel, msg)
