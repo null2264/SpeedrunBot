@@ -1,153 +1,129 @@
 import discord
-import json
+from discord.ext import commands
 
+class SRC(commands.Cog):
 
-from dateutil import parser
-from discord.ext import commands, tasks
-
-
-def realtime(time):
-    """
-    Converts times in the format XXX.xxx into h m s ms
-    """
-    ms = int(time * 1000)
-    s, ms = divmod(ms, 1000)
-    m, s = divmod(s, 60)
-    h, m = divmod(m, 60)
-    ms = "{:03d}".format(ms)
-    s = "{:02d}".format(s)
-    if h > 0:
-        m = "{:02d}".format(m)
-    return (
-        ((h > 0) * (str(h) + "h "))
-        + str(m)
-        + "m "
-        + str(s)
-        + "s "
-        + ((str(ms) + "ms") * (ms != "000"))
-    )
-
-class Speedrun(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.games = {'k6q474zd': "Minecraft (Classic)", '46w382n1': "Minecraft: Pocket Edition Lite", 'pd0wkq01': "Minecraft: New Nintendo 3DS Edition", 'k6q4520d': "Minecraft 4K", '3dx2oz41': "Minecraft: Education Edition", 'j1nejgx1': "Minecraft: Pi Edition", '4d792zz1': "ClassiCube"}
-        self.client.loop.create_task(self.asyncInit())
-        self.src_update.start()
-        self.session = self.client.session
-        self.db = self.client.db
-    
-    async def asyncInit(self):
-        """`__init__` but async"""
-        try:
-            curr = await self.db.execute("SELECT * FROM sent_runs")
-            rows = await curr.fetchall()
-            self.sent_runs = [row[0] for row in rows]
-        except Exception as exc:
-            print("Something went wrong!", exc)
-            self.sent_runs = []
 
-    async def addRun(self, run_id: str):
-        self.sent_runs += [run_id]
-        await self.db.execute(
-            """INSERT OR IGNORE INTO sent_runs VALUES (?)""",
-            (run_id,)
+    @commands.group(aliases = ['gm'], example=["group"], invoke_without_command=True)
+    async def gamemoderatorsof(self, ctx, arg=None):
+        """`Figure out who is the Game Moderator of a Game`"""
+        embed=discord.Embed(title="<:error:783265883228340245>  **Error!**", description="**Argument (game) not specified. Try using one of these games**", color=0xec0909)
+        embed.add_field(name="Minecraft (Classic)", value="mcc", inline=True)
+        embed.add_field(name="Classicube", value="cc", inline=True)
+        embed.add_field(name="Minecraft: New Nintendo 3DS Edition", value="mc3ds", inline=True)
+        embed.add_field(name="Minecraft: Pocket Edition Lite", value="mclite", inline=True)
+        embed.add_field(name="Minecraft: Education Edition", value="mcee", inline=True)
+        embed.add_field(name="Minecraft 4K", value="mc4k", inline=True)
+        embed.add_field(name="Minecraft: Pi Edition", value="mcpi", inline=True)
+        
+        await ctx.send(embed=embed)
+
+    @gamemoderatorsof.command(name="mcc")
+    async def mcc(self, ctx):
+        """`Minecraft (Classic) Game Moderators`"""
+        a = discord.Embed(
+        colour=discord.Color(0xE41919),
+        title="**Minecraft (Classic) Game Moderators**",
+        description="<:SuperMod:808405808793911316> ReniSR (<@577935851154046998>)\n"
+        + "<:SuperMod:808405808793911316> Insert (<@727035417039339540>)\n"
+        + "<:SuperMod:808405808793911316> Riley (<@168531454463049728>)\n"
+        + "<:SuperMod:808405808793911316> DarkSRC (<@595742728248360960>)\n"
+        + "<:Moderator:808405808768614460> IKY (<@564610598248120320>)\n"
+        + "<:Moderator:808405808768614460> Kai. (<@447818513906925588>)\n"
+        + "<:Moderator:808405808768614460> skye (<@329538915805691905>)\n"
+        + "<:Moderator:808405808768614460> ThanksDude (<@435314420638416917>)\n"
+        + "<:Moderator:808405808768614460> Creeper (<@286286473924444162>)\n"
+        + "<:Moderator:808405808768614460> alexwaslost (<@686940596257947664>)\n"
+        + "<:Moderator:808405808768614460> Quivvy (<@359110554721189889>)\n"
+        + "<:Moderator:808405808768614460> DimitrovN (<@509800865172029470>)\n"
+        + "<:Moderator:808405808768614460> NeonTrtl (<@571733724547252227>)\n"
         )
-        await self.db.commit()
+        await ctx.send(embed=a)
 
-    @tasks.loop(minutes=1.0)
-    async def src_update(self):
+    @gamemoderatorsof.command(name="cc")
+    async def cc(self, ctx):
+        """`Classicube Game Moderators`"""
+        a = discord.Embed(
+        colour=discord.Color(0xE41919),
+        title="**Classicube Game Moderators**",
+        description="<:SuperMod:808405808793911316> ReniSR (<@577935851154046998>)\n"
+        + "<:Moderator:808405808768614460> Insert (<@727035417039339540>)\n"
+        + "<:Moderator:808405808768614460> Riley (<@168531454463049728>)\n"
+        + "<:Moderator:808405808768614460> Kai. (<@447818513906925588>)\n"
+        )
+        await ctx.send(embed=a)
 
-        # hardcoding this idc
-        channel = self.client.get_guild(710400258793799681).get_channel(808445072948723732)
+    @gamemoderatorsof.command(name="mc3ds")
+    async def mc3ds(self, ctx):
+        """`Minecraft: New Nintendo 3DS Edition Game Moderators`"""
+        a = discord.Embed(
+        colour=discord.Color(0xE41919),
+        title="**Minecraft: New Nintendo 3DS Edition Game Moderators**",
+        description="<:SuperMod:808405808793911316> ReniSR (<@577935851154046998>)\n"
+        + "<:SuperMod:808405808793911316> Insert (<@727035417039339540>)\n"
+        + "<:SuperMod:808405808793911316> Riley (<@168531454463049728>)\n"
+        + "<:SuperMod:808405808793911316> DarkSRC (<@595742728248360960>)\n"
+        + "<:Moderator:808405808768614460> Khalooody (<@366219142799556620>)\n"
+        + "<:Moderator:808405808768614460> blunderpolicy (<@306969912566611968>)\n"
+        )
+        await ctx.send(embed=a)
 
-        # ZTS server
-        # channel = self.client.get_guild(745481731133669476).get_channel(807494660745986050)
+    @gamemoderatorsof.command(name="mclite")
+    async def mclite(self, ctx):
+        """`Minecraft: Pocket Edition Lite Game Moderators`"""
+        a = discord.Embed(
+        colour=discord.Color(0xE41919),
+        title="**Minecraft: Pocket Edition Lite Game Moderators**",
+        description="<:SuperMod:808405808793911316> ReniSR (<@577935851154046998>)\n"
+        + "<:SuperMod:808405808793911316> Insert (<@727035417039339540>)\n"
+        + "<:Moderator:808405808768614460> Riley (<@168531454463049728>)\n"
+        + "<:Moderator:808405808768614460> DarkSRC (<@595742728248360960>)\n"
+        + "<:Moderator:808405808768614460> IKY (<@564610598248120320>)\n"
+        + "<:Moderator:808405808768614460> ThanksDude (<@435314420638416917>)\n"
+        + "<:Moderator:808405808768614460> MrMega (<@305805603178020864>)\n"
+        )
+        await ctx.send(embed=a)
 
-        page = 0
-        for gameId in self.games.keys():
-            while page < 10:
-                offset = 200*page
-                async with self.session.get(f"https://www.speedrun.com/api/v1/runs?game={gameId}&status=verified&orderby=verify-date&direction=desc&max=200&embed=game,players,category.variables,level&{offset}") as r:
-                    try:
-                        runs_json = json.loads(await r.text())
-                    except json.decoder.JSONDecodeError:
-                        return
-                    for run in runs_json['data']:
-                        
-                        if run["id"] in self.sent_runs:
-                            continue
+    @gamemoderatorsof.command(name="mcee")
+    async def mcee(self, ctx):
+        """`Minecraft: Education Edition Game Moderators`"""
+        a = discord.Embed(
+        colour=discord.Color(0xE41919),
+        title="**Minecraft: Education Edition Game Moderators**",
+        description="<:SuperMod:808405808793911316> ReniSR (<@577935851154046998>)\n"
+        + "<:Moderator:808405808768614460> Insert (<@727035417039339540>)\n"
+        + "<:Moderator:808405808768614460> Riley (<@168531454463049728>)\n"
+        + "<:Moderator:808405808768614460> picbear (<@675177886096818199>)\n"
+        )
+        await ctx.send(embed=a)
 
-                        link = run["weblink"]
-                        levData = run["level"]["data"]
-                        catData = run["category"]["data"]
+    @gamemoderatorsof.command(name="mc4k")
+    async def mc4k(self, ctx):
+        """`Minecraft 4K Game Moderators`"""
+        a = discord.Embed(
+        colour=discord.Color(0xE41919),
+        title="**Minecraft 4K Game Moderators**",
+        description="<:SuperMod:808405808793911316> ReniSR (<@577935851154046998>)\n"
+        + "<:Moderator:808405808768614460> Insert (<@727035417039339540>)\n"
+        + "<:Moderator:808405808768614460> Riley (<@168531454463049728>)\n"
+        + "<:Moderator:808405808768614460> markersquire (<@451177399015571457>)\n"
+        )
+        await ctx.send(embed=a)
 
-                        runVars = run["values"]
-                        if catData:
-                            subcategoryQuery = []
-                            subcategoryName = []
-                            for var in runVars.items():
-                                foundVar = [c for c in catData["variables"]["data"] if c["id"] == var[0]]
-                                if foundVar and foundVar[0]["is-subcategory"]:
-                                    subcategoryQuery += ["var-{}={}".format(var[0], var[1])]
-                                    subcategoryName += [foundVar[0]["values"]["values"][var[1]]["label"]]
-                            rank = ""
-                            if catData["type"] == "per-level":
-                                categoryID = catData["id"]
-                                levelID = levData["id"]
-                                categoryName = levData["name"] + ": " + catData["name"] + " - " + ", ".join(subcategoryName)
-                                leaderboard = await self.session.get(f"https://www.speedrun.com/api/v1/leaderboards/{run['game']['data']['id']}/level/{levelID}/{categoryID}?{'&'.join(subcategoryQuery)}")
-                                leaderboard = json.loads(await leaderboard.text())
-                                _ = leaderboard["data"]["runs"]
-                                for r in _:
-                                    if r["run"]["id"] == run["id"]:
-                                        rank = r["place"]
-                            else:
-                                categoryID = catData["id"]
-                                categoryName = catData["name"]
-                                leaderboard = await self.session.get(f"https://www.speedrun.com/api/v1/leaderboards/{run['game']['data']['id']}/category/{categoryID}?{'&'.join(subcategoryQuery)}")
-                                leaderboard = json.loads(await leaderboard.text())
-                                _ = leaderboard["data"]["runs"]
-                                for r in _:
-                                    if r["run"]["id"] == run["id"]:
-                                        rank = r["place"]
-
-                        players = []
-                        for player in run["players"]["data"]:
-                            if player["rel"] == "guest":
-                                players.append(player["name"])
-                            else:
-                                players.append(player["names"]["international"])
-
-                        igt = run["times"]["ingame_t"]
-                        rta = run["times"]["realtime_t"]
-                        cover = run["game"]["data"]["assets"]["cover-large"]["uri"]
-                        verifyDate = run["status"]["verify-date"]
-                        playDate = run["date"]
-                        
-                        try:
-                            a = discord.Embed(
-                                title=f"{realtime(igt if igt else rta)} by {', '.join(players)}",
-                                url=link,
-                                colour=discord.Color(0xFFFFF0),
-                                timestamp=parser.isoparse(playDate)
-                            )
-                            a.set_author(name=f"{run['game']['data']['names']['international']} - {categoryName}")
-                            a.add_field(name="Leaderboard Rank", value="Unknown" if not rank else rank)
-                            a.add_field(name="Verified at", value=f"`{parser.isoparse(verifyDate)}`", inline=False)
-                            a.set_thumbnail(url=cover)
-
-                            await channel.send(embed=a)
-                            await self.addRun(run["id"])
-                        except KeyError as err:
-                            print(err)
-                            pass
-                page += 1
-
-    @src_update.before_loop
-    async def before_update(self):
-        print('Getting runs...')
-        await self.client.wait_until_ready()
-
+    @gamemoderatorsof.command(name="mcpi")
+    async def mcpi(self, ctx):
+        """`Minecraft: Pi Edition Game Moderators`"""
+        a = discord.Embed(
+        colour=discord.Color(0xE41919),
+        title="**Minecraft: Pi Edition Game Moderators**",
+        description="<:SuperMod:808405808793911316> ReniSR (<@577935851154046998>)\n"
+        + "<:SuperMod:808405808793911316> Insert (<@727035417039339540>)\n"
+        + "<:SuperMod:808405808793911316> Riley (<@168531454463049728>)\n"
+        + "<:Moderator:808405808768614460> Quivvy (<@359110554721189889>)\n"
+        )
+        await ctx.send(embed=a)
 
 def setup(client):
-    client.add_cog(Speedrun(client))
+    client.add_cog(SRC(client))
