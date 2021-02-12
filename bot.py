@@ -7,8 +7,7 @@ import os
 from discord.ext import commands
 
 
-# get token from .env
-token = os.environ.get("DISCORD_BOT_SECRET")
+import config
 
 
 class MangoManBot(commands.Bot):
@@ -50,4 +49,8 @@ class MangoManBot(commands.Bot):
                 self.load_extension(f'cogs.{filename[:-3]}')
 
     def run(self):
-        super().run(token, reconnect=True)
+        super().run(config.token, reconnect=True)
+
+    @property
+    def config(self):
+        return __import__("config")

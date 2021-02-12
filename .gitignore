@@ -3,3 +3,4 @@ __pycache__/
 database.db
 fair.json
 starboard_config.json
+config.py
