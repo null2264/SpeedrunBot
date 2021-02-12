@@ -17,6 +17,9 @@ class Starred:
         # Return none for Legacy support
         self.bot_message_id = bot_message_id
 
+    def __repr__(self):
+        return "<Starred: {}, {}>".format(self.id, self.bot_message_id)
+
 
 class StarboardConfig:
     __slots__ = ("id", "bot", "channel_id", "amount")
@@ -47,19 +50,18 @@ class Stars(commands.Cog):
         try:
             with open("starboard_config.json", "r") as conf:
                 conf = json.load(conf)
-                for guildId in conf:
-                    starred = [pin for pin in conf[guildId]["pins"]]
-                    for star in starred:
+                for guildId, data in conf.items():
+                    try:
                         try:
-                            try:
-                                self.starred[guildId] += [Starred(star[0], star[1])]
-                            except KeyError:
-                                self.starred[guildId] = [Starred(star[0], star[1])]
-                        except TypeError:
-                            try:
-                                self.starred[guildId] += [Starred(star)]
-                            except KeyError:
-                                self.starred[guildId] = [Starred(star)]
+                            self.starred[guildId] += [Starred(star[0], star[1]) for star in data["pins"]]
+                        except KeyError:
+                            self.starred[guildId] = [Starred(star[0], star[1]) for star in data["pins"]]
+                    except TypeError:
+                        # Old starred format (without bot_message_id, remove soon)
+                        try:
+                            self.starred[guildId] += [Starred(star) for star in data["pins"]]
+                        except KeyError:
+                            self.starred[guildId] = [Starred(star) for star in data["pins"]]
         except FileNotFoundError:
             with open('starboard_config.json', 'w+') as f:
                 json.dump({}, f, indent=4)
