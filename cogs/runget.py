@@ -31,9 +31,16 @@ def realtime(time):
 class RunGetHandler(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.games = {'k6q474zd': "Minecraft (Classic)", '46w382n1': "Minecraft: Pocket Edition Lite", 'pd0wkq01': "Minecraft: New Nintendo 3DS Edition", 'k6q4520d': "Minecraft 4K", '3dx2oz41': "Minecraft: Education Edition", 'j1nejgx1': "Minecraft: Pi Edition", '4d792zz1': "ClassiCube"}
+        self.games = {
+            'k6q474zd': "Minecraft (Classic)",
+            '46w382n1': "Minecraft: Pocket Edition Lite",
+            'pd0wkq01': "Minecraft: New Nintendo 3DS Edition",
+            'k6q4520d': "Minecraft 4K",
+            '3dx2oz41': "Minecraft: Education Edition",
+            'j1nejgx1': "Minecraft: Pi Edition",
+            '4d792zz1': "ClassiCube"
+        }
         self.client.loop.create_task(self.asyncInit())
-        self.src_update.start()
         self.session = self.client.session
         self.db = self.client.db
     
@@ -46,11 +53,12 @@ class RunGetHandler(commands.Cog):
         except Exception as exc:
             print("Something went wrong!", exc)
             self.sent_runs = []
+        self.src_update.start()
 
     async def addRun(self, run_id: str):
         self.sent_runs += [run_id]
         await self.db.execute(
-            """INSERT OR IGNORE INTO sent_runs VALUES (?)""",
+            "INSERT OR IGNORE INTO sent_runs VALUES (?)",
             (run_id,)
         )
         await self.db.commit()
