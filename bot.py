@@ -35,10 +35,16 @@ class MangoManBot(commands.Bot):
             )
             """
         )
+
         await self.db.commit()
 
     async def on_ready(self):
-        await self.change_presence(activity = discord.Activity(type=discord.ActivityType.watching, name=('Over my Mangoes | Prefix mm!')))
+        await self.change_presence(
+            activity = discord.Activity(
+                type=discord.ActivityType.watching, 
+                name=('Over my Mangoes | Prefix mm!')
+            )
+        )
         for filename in os.listdir('./cogs'):
             if filename.endswith('.py'):
                 self.load_extension(f'cogs.{filename[:-3]}')
