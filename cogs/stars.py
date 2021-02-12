@@ -52,16 +52,10 @@ class Stars(commands.Cog):
                 conf = json.load(conf)
                 for guildId, data in conf.items():
                     try:
-                        try:
-                            self.starred[guildId] += [Starred(star[0], star[1]) for star in data["pins"]]
-                        except KeyError:
-                            self.starred[guildId] = [Starred(star[0], star[1]) for star in data["pins"]]
+                        self.starred[guildId] = [Starred(star[0], star[1]) for star in data["pins"]]
                     except TypeError:
                         # Old starred format (without bot_message_id, remove soon)
-                        try:
-                            self.starred[guildId] += [Starred(star) for star in data["pins"]]
-                        except KeyError:
-                            self.starred[guildId] = [Starred(star) for star in data["pins"]]
+                        self.starred[guildId] = [Starred(star) for star in data["pins"]]
         except FileNotFoundError:
             with open('starboard_config.json', 'w+') as f:
                 json.dump({}, f, indent=4)
