@@ -26,17 +26,6 @@ class MangoManBot(commands.Bot):
         """`__init__` but async"""
         self.db = await aiosqlite.connect("database.db")
 
-        await self.db.execute(
-            """
-            CREATE TABLE IF NOT EXISTS sent_runs
-            (
-                run_id TEXT UNIQUE
-            )
-            """
-        )
-
-        await self.db.commit()
-
     async def on_ready(self):
         await self.change_presence(
             activity = discord.Activity(

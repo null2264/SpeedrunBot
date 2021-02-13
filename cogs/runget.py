@@ -46,6 +46,18 @@ class RunGetHandler(commands.Cog):
     
     async def asyncInit(self):
         """`__init__` but async"""
+        # Create `sent_runs` table if its not exists
+        await self.db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sent_runs
+            (
+                run_id TEXT UNIQUE
+            )
+            """
+        )
+        await self.db.commit()
+
+        # Try get sent_runs from database
         try:
             curr = await self.db.execute("SELECT * FROM sent_runs")
             rows = await curr.fetchall()
@@ -56,9 +68,19 @@ class RunGetHandler(commands.Cog):
         self.src_update.start()
 
     async def addRun(self, run_id: str):
+        """Add run_id to sent_runs variable and sent_runs table"""
         self.sent_runs += [run_id]
         await self.db.execute(
             "INSERT OR IGNORE INTO sent_runs VALUES (?)",
+            (run_id,)
+        )
+        await self.db.commit()
+    
+    async def removeRun(self, run_id: str):
+        """Delete run_id from sent_runs variable and sent_runs table"""
+        self.sent_runs -= [run_id]
+        await self.db.execute(
+            "DELETE FROM sent_runs WHERE run_id=?",
             (run_id,)
         )
         await self.db.commit()
@@ -145,11 +167,11 @@ class RunGetHandler(commands.Cog):
                             a.add_field(name="Verified at", value=f"`{parser.isoparse(verifyDate)}`", inline=False)
                             a.set_thumbnail(url=cover)
 
-                            await channel.send(embed=a)
                             await self.addRun(run["id"])
+                            await channel.send(embed=a)
                         except KeyError as err:
                             print(err)
-                            pass
+                            await self.removeRun(run["id"])
                 page += 1
 
     @src_update.before_loop
