@@ -91,6 +91,7 @@ class Fair(commands.Cog):
 
     # 24 hour cooldown
     # should probably be longer - we can't have these kids cheating!
+    @commands.cooldown(1, 90000, commands.BucketType.user)
     @commands.command()
     async def timezone(self, ctx, timeZone):
         """`Set timezone for fair days/streaks`"""
