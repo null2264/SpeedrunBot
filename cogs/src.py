@@ -29,7 +29,7 @@ class SRC(commands.Cog):
 		userID = userData["data"][0]["id"]
 		userName = userData["data"][0]["names"]["international"]
 
-		params = {"examiner": userID, "page": 0}
+		params = {"examiner": userID, "page": 0, "perPage": 200}
 		if game:
 			# Get game id if game is specified
 			games = await self.src.get_games(name=game)
