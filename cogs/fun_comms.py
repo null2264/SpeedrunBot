@@ -431,5 +431,25 @@ class Fun(commands.Cog):
         """`Discord's mistake`"""
         await ctx.send(choice(ctx.guild.members).mention)
 
+    @commands.command(aliases=["dl"])
+    async def dreamluck(self, ctx):
+        """`Test your Minecraft RNG, but in a bot command`"""
+        blaze = sum([1 for i in range(306) if random() * 100 <= 50])
+
+        pearl = sum([1 for i in range(263) if random() < (20/473)])
+
+        e = discord.Embed(
+            title=f"Your Pearl Trades -> {pearl}/262",
+            description="While Dream's luck was -> 42/262",
+            colour=discord.Colour(0x08443A),
+        )
+        a = discord.Embed(
+            title=f"Your Blaze Drops -> {blaze}/305",
+            description="While Dream's luck was 211/305",
+            colour=discord.Colour.gold(),
+        )
+        await ctx.reply(embed=e)
+        await ctx.send(embed=a)
+
 def setup(client):
     client.add_cog(Fun(client))

@@ -13,7 +13,7 @@ class SRC(commands.Cog):
 	async def verified(self, ctx, user: str, game: str = None):
 		"""Get how many run a user have verified."""
 		e = discord.Embed(
-		    title="<a:loading:776255339716673566> Loading...",
+		    title="<a:loading:776255339716673566> Loading... (SRC API sucks so its going to take a while)",
 		    colour=discord.Colour.gold(),
 		)
 		msg = await ctx.reply(embed=e)
