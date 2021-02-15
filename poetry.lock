@@ -178,6 +178,21 @@ werkzeug = ">=1.0.1,<2.0.0"
 
 [[package]]
 category = "main"
+description = "Async API Wrapper for speedrun.com"
+name = "speedrun.py"
+optional = false
+python-versions = ">=3.8"
+version = "0.0.9"
+
+[package.dependencies]
+aiohttp = "*"
+
+[package.source]
+reference = "b3660980369680872f6f1c586178f910a227fb67"
+type = "git"
+url = "https://github.com/null2264/speedrun.py.git"
+[[package]]
+category = "main"
 description = "Backported and Experimental Type Hints for Python 3.5+"
 name = "typing-extensions"
 optional = false
@@ -217,7 +232,7 @@ idna = ">=2.0"
 multidict = ">=4.0"
 
 [metadata]
-content-hash = "41d8ad9d51be4bc64eb4328dd597ede2193497790ae0682b68bc1d12d7b70617"
+content-hash = "0d3cdc715ce1404e5fba009dd9f0c898d5d732f0041fbb95a4a16cbf523e3734"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -405,6 +420,7 @@ replit = [
     {file = "replit-2.0.0-py3-none-any.whl", hash = "sha256:862b49887f486a5c83eba4809b86a977378a008f1c5d53ab3c1187418194cf18"},
     {file = "replit-2.0.0.tar.gz", hash = "sha256:f6953201a5ff5b3ae29b7630fa13a87f2423f5a9afba06fc5427ee0f958c7aa7"},
 ]
+"speedrun.py" = []
 typing-extensions = [
     {file = "typing_extensions-3.7.4.3-py2-none-any.whl", hash = "sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f"},
     {file = "typing_extensions-3.7.4.3-py3-none-any.whl", hash = "sha256:7cb407020f00f7bfc3cb3e7881628838e69d8f3fcab2f64742a5e76b2f841918"},
