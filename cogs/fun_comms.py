@@ -436,7 +436,7 @@ class Fun(commands.Cog):
         """`Test your Minecraft RNG, but in a bot command`"""
         blaze = sum([1 for i in range(306) if random() * 100 <= 50])
 
-        pearl = sum([1 for i in range(263) if random() < (20/473)])
+        pearl = sum([1 for i in range(263) if random() <= (20/473)])
 
         e = discord.Embed(
             title=f"Your Pearl Trades -> {pearl}/262",
