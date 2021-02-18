@@ -1,5 +1,6 @@
 import discord
 
+
 from discord.ext import commands
 from speedrunpy import SpeedrunPy
 
@@ -52,6 +53,49 @@ class SRC(commands.Cog):
             url="https://www.speedrun.com/themes/user/{}/image.png".format(userName)
         )
         await msg.edit(embed=e)
+
+    async def get_user_id(self, username):
+        data = await self.src.get("/users/", f"{username}")
+        if "data" not in data:
+            return None
+        data = data["data"]
+        return data["id"]
+
+    async def username(self, user_id):
+        data = await self.src.get("/users/", f"{user_id}")
+        if "data" not in data:
+            return None
+        data = data["data"]
+        return data["names"]["international"]
+
+    @commands.command(name="wrcount", aliases=["wrs"])
+    async def wrcount(self, ctx, user: str):
+        """Counts the number of world records a user has."""
+        msg = await ctx.send("Loading...")
+        data = await self.src.get("/users", "/{}/personal-bests".format(user))
+        try:
+            data = data["data"]
+        except KeyError:
+            return await ctx.send(f"There's no user called `{user}`")
+        fullgame_wr = sum([1 for pb in data if pb["place"] == 1 and not pb["run"]["level"]])
+        ils_wr = sum([1 for pb in data if pb["place"] == 1 and pb["run"]["level"]])
+        # for pb in data:
+        #     if pb["place"] > 1:
+        #         continue
+
+        #     if pb["run"]["level"]:
+        #         ils_wr += 1
+        #     elif not pb["run"]["level"]:
+        #         fullgame_wr += 1
+        #     else:
+        #         # Uh oh!
+        #         continue
+        await msg.edit(content=
+            "{} has ".format(await self.username(await self.get_user_id(user)))
+            + f"**{fullgame_wr + ils_wr}** world records:\n**{fullgame_wr}** full game "
+            + f"record{'s' if fullgame_wr > 1 else ''} and "
+            + f"**{ils_wr}** IL record{'s' if ils_wr > 1 else ''}"
+        )
 
     @commands.group(aliases=["gm"], example=["group"], invoke_without_command=True)
     async def gamemoderatorsof(self, ctx, arg=None):

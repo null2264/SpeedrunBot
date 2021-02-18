@@ -15,6 +15,7 @@ flask = "^1.1.2"
 replit = "^2.0.0"
 uvloop = "^0.14.0"
 "speedrun.py" = { git = "https://github.com/null2264/speedrun.py.git", branch = "master" }
+ujson = "^4.0.2"
 
 [tool.poetry.dev-dependencies]
 
