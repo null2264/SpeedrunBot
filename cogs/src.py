@@ -427,7 +427,7 @@ class SRC(commands.Cog):
         await getSubCats("levels", levels["data"][0]["id"], subcats, params)
         return formatLink(link, params) 
 
-    @commands.command(usage="<game> [category|individual level(category)] [subcategories...]")
+    @commands.command(usage="<game> [category|individual level(category)] [subcategories...]", aliases=["lb"])
     async def leaderboard(self, ctx, game: str, category: str = None, *subcategories: str):
         """Get leaderboard of a game. Tips: Use "" for name with spaces"""
         
@@ -453,31 +453,19 @@ class SRC(commands.Cog):
 
         link = await self.catOrLevel(**params)
 
-        try:
-            async with self.session.get(link) as res:
-                lb = json.loads(await res.text())
+        async with self.session.get(link) as res:
+            lb = json.loads(await res.text())
 
-                if not lb:
-                    # In case empty lb still happened
-                    raise srcError.DataNotFound
+            if not lb:
+                # In case empty lb still happened
+                raise srcError.DataNotFound
 
-                pages = MMReplyMenu(
-                    source=LeaderboardPageSource(ctx, lb),
-                    init_msg=self.initMsg,
-                    ping=True
-                )
-                return await pages.start(ctx)
-        except srcError.DataNotFound:
-            e = discord.Embed(
-                title="<:error:783265883228340245> 404 - No data found",
-                colour=discord.Colour.red(),
+            pages = MMReplyMenu(
+                source=LeaderboardPageSource(ctx, lb),
+                init_msg=self.initMsg,
+                ping=True
             )
-        except Exception as err:
-            e = discord.Embed(
-                title="<:error:783265883228340245> Failed to get data from speedrun.com",
-                colour=discord.Colour.red(),
-            )
-        await self.initMsg.edit(embed=e)
+            return await pages.start(ctx)
     
     @leaderboard.error
     async def leaderboard_error(self, ctx, error):
