@@ -2,30 +2,9 @@ import discord
 import json
 
 
+from .utilities.formatting import realtime, pformat
 from dateutil import parser
 from discord.ext import commands, tasks
-
-
-def realtime(time):
-    """
-    Converts times in the format XXX.xxx into h m s ms
-    """
-    ms = int(time * 1000)
-    s, ms = divmod(ms, 1000)
-    m, s = divmod(s, 60)
-    h, m = divmod(m, 60)
-    ms = "{:03d}".format(ms)
-    s = "{:02d}".format(s)
-    if h > 0:
-        m = "{:02d}".format(m)
-    return (
-        ((h > 0) * (str(h) + "h "))
-        + str(m)
-        + "m "
-        + str(s)
-        + "s "
-        + ((str(ms) + "ms") * (ms != "000"))
-    )
 
 
 class RunGetHandler(commands.Cog):

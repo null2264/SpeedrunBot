@@ -8,7 +8,6 @@ authors = ["Your Name <you@example.com>"]
 python = "^3.8"
 aiohttp = "^3.7.3"
 aiosqlite = "^0.16.1"
-"discord.py" = "^1.6.0"
 pytz = "^2021.1"
 config = "^0.5.0"
 flask = "^1.1.2"
@@ -16,6 +15,8 @@ replit = "^2.0.0"
 uvloop = "^0.14.0"
 "speedrun.py" = { git = "https://github.com/null2264/speedrun.py.git", branch = "master" }
 ujson = "^4.0.2"
+discord = "^1.0.1"
+"zidiscord.py" = "^1.7.0"
 
 [tool.poetry.dev-dependencies]
 
