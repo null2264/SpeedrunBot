@@ -1,5 +1,4 @@
 import asyncio
-import keep_alive
 
 
 from bot import MangoManBot
@@ -17,5 +16,4 @@ client = MangoManBot()
 
 
 loop = asyncio.get_event_loop()
-keep_alive.keep_alive()
 client.run()
