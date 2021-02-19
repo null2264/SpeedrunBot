@@ -5,3 +5,4 @@ uvloop == 0.15.1
 speedrun.py == 0.0.12
 zidiscord.py == 1.7.0
 python-dateutil == 2.8.1
+requests == 2.25.1
