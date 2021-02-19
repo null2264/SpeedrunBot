@@ -430,7 +430,8 @@ class Fun(commands.Cog):
     async def someone(self, ctx):
         """`Discord's mistake`"""
         await ctx.send(choice(ctx.guild.members).mention)
-
+    
+    @commands.cooldown(1, 10, commands.BucketType.user)
     @commands.command(aliases=["dl"])
     async def dreamluck(self, ctx):
         """`Test your Minecraft RNG, but in a bot command`"""
@@ -450,6 +451,38 @@ class Fun(commands.Cog):
         )
         await ctx.reply(embed=e)
         await ctx.send(embed=a)
+
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.command()
+    async def findseeds(self, ctx, attempts: int=100):
+        """`Findseed but in bulk"""
+        if attempts > 100000:
+            attempts = 100000
+        if attempts <= 0:
+            await ctx.reply("Give the amout of seeds you want to findseeds")
+            return
+        if attempts == 1:
+            await ctx.reply("You know that `-findseed` exists, right?")
+            return
+
+        eyes = {}
+        for i in range(attempts):
+            curEye = sum([1 for i in range(12) if randint(1, 10) == 1])
+            try:
+                eyes[curEye] += 1
+            except KeyError:
+                eyes[curEye] = 1
+
+        e = discord.Embed(
+            title=f"This is what you got in {attempts} seeds",
+            description="\n".join(["**{}** eyes: `{}` seeds".format(k, v) for k, v in sorted(eyes.items())]),
+            color=discord.Colour(0x349988),
+        )
+        e.set_author(
+            name=f"{ctx.message.author.name}#{ctx.message.author.discriminator}",
+            icon_url=ctx.message.author.avatar_url,
+        )
+        await ctx.reply(embed=e)
 
 def setup(client):
     client.add_cog(Fun(client))
