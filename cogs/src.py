@@ -119,7 +119,7 @@ class LeaderboardPageSource(menus.ListPageSource):
             icon_url="https://www.speedrun.com/images/1st.png",
         )
         e.set_thumbnail(url=self.gameData["assets"]["cover-large"]["uri"])
-        e.set_author(name=self.ctx.author, icon_url=self.ctx.author.avatar_url)
+        e.set_footer(text="Requested by {}".format(str(self.ctx.author)), icon_url=self.ctx.author.avatar_url)
 
         for run in runs:
             players = []
@@ -481,7 +481,6 @@ class SRC(commands.Cog):
                 colour=discord.Colour.red(),
             )
         await self.initMsg.edit(embed=e)
-
 
 
 def setup(client):
