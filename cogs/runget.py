@@ -66,12 +66,12 @@ class RunGetHandler(commands.Cog):
 
     @tasks.loop(minutes=1.0)
     async def src_update(self):
-
         # hardcoding this idc
-        channel = self.client.get_guild(710400258793799681).get_channel(808445072948723732)
-
-        # ZTS server
-        # channel = self.client.get_guild(745481731133669476).get_channel(807494660745986050)
+        if self.client.user.id == 810573928782757950:
+            # Testing server
+            channel = self.client.get_guild(745481731133669476).get_channel(807494660745986050)
+        else:
+            channel = self.client.get_guild(710400258793799681).get_channel(808445072948723732)
 
         for gameId in self.games.keys():
             page = 0
