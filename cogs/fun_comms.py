@@ -452,7 +452,7 @@ class Fun(commands.Cog):
         await ctx.reply(embed=e)
         await ctx.send(embed=a)
 
-    @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.cooldown(1, 30, commands.BucketType.user)
     @commands.command()
     async def findseeds(self, ctx, attempts: int=100):
         """`Findseed but in bulk"""
