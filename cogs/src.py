@@ -5,84 +5,14 @@ import re
 
 
 from .utilities.formatting import realtime, pformat
+from .utilities.paginator import MMMenu, MMReplyMenu
 from discord.ext import commands, menus
 from speedrunpy import SpeedrunPy, errors as srcError
 
 
-class MMMenu(menus.MenuPages):
-    def __init__(self, source, init_msg=None, check_embeds=True, ping=False, loop=None):
-        super().__init__(source=source, check_embeds=check_embeds)
-        self.ping = ping
-        self.init_msg = init_msg
-
-    async def start(self, ctx):
-        if not self.init_msg:
-            e = discord.Embed(title="Loading...", colour=discord.Colour.blue())
-            self.init_msg = await ctx.channel.send(embed=e)
-        await super().start(ctx)
-
-    async def send_initial_message(self, ctx, channel):
-        page = await self._source.get_page(0)
-        kwargs = await self._get_kwargs_from_page(page)
-        if self.init_msg:
-            await self.init_msg.edit(**kwargs)
-            return self.init_msg
-
-    async def update(self, payload):
-        if self._can_remove_reactions:
-            if payload.event_type == "REACTION_ADD":
-                channel = self.bot.get_channel(payload.channel_id)
-                msg = channel.get_partial_message(payload.message_id)
-                await msg.remove_reaction(payload.emoji, payload.member)
-            elif payload.event_type == "REACTION_REMOVE":
-                return
-        await super().update(payload)
-
-    async def finalize(self, timed_out):
-        try:
-            if timed_out:
-                await self.message.clear_reactions()
-            else:
-                await self.message.delete()
-        except discord.HTTPException:
-            pass
-
-
-class MMReplyMenu(MMMenu):
-    def __init__(self, source, ping=False, **kwargs):
-        self.ping = ping
-        super().__init__(source=source, check_embeds=True, **kwargs)
-
-    async def start(self, ctx):
-        if not self.init_msg:
-            e = discord.Embed(title="Loading...", colour=discord.Colour.blue())
-            self.init_msg = await ctx.reply(
-                embed=e, mention_author=False if not self.ping else True
-            )
-        await super().start(ctx)
-
-    async def send_initial_message(self, ctx, channel):
-        page = await self._source.get_page(0)
-        kwargs = await self._get_kwargs_from_page(page)
-        await self.init_msg.edit(**kwargs)
-        return self.init_msg
-
-    async def _get_kwargs_from_page(self, page):
-        no_ping = {"mention_author": False if not self.ping else True}
-        value = await discord.utils.maybe_coroutine(
-            self._source.format_page, self, page
-        )
-        if isinstance(value, dict):
-            return value.update(no_ping)
-        elif isinstance(value, str):
-            no_ping.update({"content": value})
-        elif isinstance(value, discord.Embed):
-            no_ping.update({"embed": value})
-        return no_ping
-
-
 class LeaderboardPageSource(menus.ListPageSource):
     def __init__(self, ctx, data):
+        """PageSource for sr.c Leaderboard"""
         self.ctx = ctx
         self.data = data["data"]
         self.gameData = self.data["game"]["data"]
@@ -206,7 +136,7 @@ class SRC(commands.Cog):
     async def wrcount(self, ctx, user: str):
         """Counts the number of world records a user has."""
         msg = await ctx.send("Loading...")
-        
+
         data = await self.src.get("/users", "/{}/personal-bests".format(user))
         try:
             data = data["data"]
@@ -385,15 +315,15 @@ class SRC(commands.Cog):
 
         # if category name specified
         if name:
+            # if levCatName is specificed, most likely its a ILs
             if not levCatName:
                 # Get category id
                 for cat in cats:
-                    if pformat(cat.name) == pformat(name):
-                        if cat.type == "per-game":
-                            # If category is the same as input, and is full game cat, return link
-                            link = cat.rawData["links"][-1]["uri"]
-                            await getSubCats("categories", cat.id, subcats, params)
-                            return formatLink(link, params) 
+                    if pformat(cat.name) == pformat(name) and cat.type == "per-game":
+                        # If category is the same as input, and is full game cat, return link
+                        link = cat.rawData["links"][-1]["uri"]
+                        await getSubCats("categories", cat.id, subcats, params)
+                        return formatLink(link, params) 
             # Get IL id
             for lev in levels["data"]:
                 if pformat(lev["name"]) == pformat(name):
