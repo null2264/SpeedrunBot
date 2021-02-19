@@ -206,24 +206,16 @@ class SRC(commands.Cog):
     async def wrcount(self, ctx, user: str):
         """Counts the number of world records a user has."""
         msg = await ctx.send("Loading...")
+        
         data = await self.src.get("/users", "/{}/personal-bests".format(user))
         try:
             data = data["data"]
         except KeyError:
             return await ctx.send(f"There's no user called `{user}`")
+
         fullgame_wr = sum([1 for pb in data if pb["place"] == 1 and not pb["run"]["level"]])
         ils_wr = sum([1 for pb in data if pb["place"] == 1 and pb["run"]["level"]])
-        # for pb in data:
-        #     if pb["place"] > 1:
-        #         continue
 
-        #     if pb["run"]["level"]:
-        #         ils_wr += 1
-        #     elif not pb["run"]["level"]:
-        #         fullgame_wr += 1
-        #     else:
-        #         # Uh oh!
-        #         continue
         await msg.edit(content=
             "{} has ".format(await self.username(await self.get_user_id(user)))
             + f"**{fullgame_wr + ils_wr}** world records:\n**{fullgame_wr}** full game "
