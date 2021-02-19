@@ -462,7 +462,7 @@ class Fun(commands.Cog):
             await ctx.reply("Give the amout of seeds you want to findseeds")
             return
         if attempts == 1:
-            await ctx.reply("You know that `-findseed` exists, right?")
+            await ctx.reply("You know that `mm!findseed` exists, right?")
             return
 
         eyes = {}
