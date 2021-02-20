@@ -41,9 +41,7 @@ class CategoriesPageSource(menus.ListPageSource):
             if not var["is-subcategory"]:
                 continue
             for val in var["values"]["values"].values():
-                if not val["rules"]:
-                    continue
-                e.add_field(name=val["label"], value=val["rules"], inline=False)
+                e.add_field(name=val["label"], value=val["rules"] or "No rules specified.", inline=False if val["rules"] else True)
         return e
         
 
