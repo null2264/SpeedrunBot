@@ -10,6 +10,43 @@ from discord.ext import commands, menus
 from speedrunpy import SpeedrunPy, errors as srcError
 
 
+class CategoriesPageSource(menus.ListPageSource):
+    def __init__(self, ctx, data):
+        """PageSource for sr.c Categories"""
+        self.ctx = ctx
+        self.data = data
+        cats = data.rawData["categories"]["data"]
+        super().__init__(
+            [cat for cat in cats if cat["type"] == "per-game"],
+            per_page=1,
+        )
+    
+    def format_page(self, menu, category):
+        e = discord.Embed(
+            title=category["name"],
+            description=category["rules"],
+            colour=discord.Colour.gold(),
+        )
+        e.set_author(
+            name=self.data.name,
+            icon_url="https://www.speedrun.com/images/1st.png",
+        )
+        e.set_thumbnail(url=self.data.assets["cover-large"].uri)
+        e.set_footer(
+            text="Requested by {}".format(str(self.ctx.author)),
+            icon_url=self.ctx.author.avatar_url,
+        )
+        vars = category["variables"]["data"]
+        for var in vars:
+            if not var["is-subcategory"]:
+                continue
+            for val in var["values"]["values"].values():
+                if not val["rules"]:
+                    continue
+                e.add_field(name=val["label"], value=val["rules"], inline=False)
+        return e
+        
+
 class LeaderboardPageSource(menus.ListPageSource):
     def __init__(self, ctx, data):
         """PageSource for sr.c Leaderboard"""
@@ -76,7 +113,7 @@ class SRC(commands.Cog):
 
     @commands.command(aliases=["v"])
     async def verified(self, ctx, user: str, game: str = None):
-        """Get how many run a user have verified."""
+        """`Get how many run a user have verified.`"""
         e = discord.Embed(
             title="<a:loading:776255339716673566> Loading... (SRC API sucks so its going to take a while)",
             colour=discord.Colour.gold(),
@@ -134,7 +171,7 @@ class SRC(commands.Cog):
 
     @commands.command(name="wrcount", aliases=["wrs"])
     async def wrcount(self, ctx, user: str):
-        """Counts the number of world records a user has."""
+        """`Counts the number of world records a user has.`"""
         msg = await ctx.send("Loading...")
 
         data = await self.src.get("/users", "/{}/personal-bests".format(user))
@@ -403,6 +440,26 @@ class SRC(commands.Cog):
                 colour=discord.Colour.red(),
             )
         await self.initMsg.edit(embed=e)
+    
+    @commands.command()
+    async def categories(self, ctx, game: str):
+        """Get categories of a game"""
+        e = discord.Embed(
+            title="<a:loading:776255339716673566> Loading...",
+            colour=discord.Colour.gold(),
+        )
+        self.initMsg = await ctx.reply(embed=e)
+
+        data = await self.src.get_games(name=game, embeds=["categories.variables"])
+        
+        cats = data[0]
+
+        pages = MMReplyMenu(
+            source=CategoriesPageSource(ctx, cats),
+            init_msg=self.initMsg,
+            ping=True,
+        )
+        return await pages.start(ctx)
 
 
 def setup(client):
