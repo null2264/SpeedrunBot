@@ -347,7 +347,7 @@ class SRC(commands.Cog):
             subcats = await self.subcats(_type, catId, subcats)
             for subcat in subcats:
                 params += ["var-{}={}".format(subcat[0], subcat[1])]
-
+        
         # if category name specified
         if name:
             # if levCatName is specificed, most likely its a ILs
