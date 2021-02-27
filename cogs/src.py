@@ -192,8 +192,8 @@ class SRC(commands.Cog):
         userName = await self.username(await self.get_user_id(user))
 
         e = discord.Embed(
-            title="{}".format(userName),
-            description="Full games: `{}`\nIndividual levels: `{}`\nTotal: `{}`".format(
+            title="{}'s World Records".format(userName),
+            description="Full games: `{}`\nIndividual levels: `{}`\n**Total: `{}`**".format(
                 fullgame_wr, ils_wr, fullgame_wr + ils_wr
             ),
             colour=discord.Colour.gold(),

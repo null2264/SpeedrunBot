@@ -10,15 +10,15 @@ from discord.ext import commands, tasks
 class RunGetHandler(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.games = {
-            'k6q474zd': "Minecraft (Classic)",
-            '46w382n1': "Minecraft: Pocket Edition Lite",
-            'pd0wkq01': "Minecraft: New Nintendo 3DS Edition",
-            'k6q4520d': "Minecraft 4K",
-            '3dx2oz41': "Minecraft: Education Edition",
-            'j1nejgx1': "Minecraft: Pi Edition",
-            '4d792zz1': "ClassiCube"
-        }
+        self.games = (
+            'k6q474zd', # Minecraft (Classic)
+            '46w382n1', # Minecraft: Pocket Edition Lite
+            'pd0wkq01', # Minecraft: New Nintendo 3DS Edition
+            'k6q4520d', # Minecraft 4K
+            '3dx2oz41', # Minecraft: Education Edition
+            'j1nejgx1', # Minecraft: Pi Edition
+            '4d792zz1', # ClassiCube
+        )
         self.client.loop.create_task(self.asyncInit())
         self.session = self.client.session
         self.db = self.client.db
@@ -73,14 +73,15 @@ class RunGetHandler(commands.Cog):
         else:
             channel = self.client.get_guild(710400258793799681).get_channel(808445072948723732)
 
-        for gameId in self.games.keys():
+        for gameId in self.games:
             page = 0
             while page < 10:
                 offset = 200*page
                 async with self.session.get(f"https://www.speedrun.com/api/v1/runs?game={gameId}&status=verified&orderby=verify-date&direction=desc&max=200&embed=game,players,category.variables,level&{offset}") as r:
                     try:
                         runs_json = json.loads(await r.text())
-                    except json.decoder.JSONDecodeError:
+                    except json.decoder.JSONDecodeError as e:
+                        print(e)
                         return
                     for run in runs_json['data']:
                         
