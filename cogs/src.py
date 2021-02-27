@@ -148,6 +148,10 @@ class SRC(commands.Cog):
             description="Runs verified:\n `{}`".format(runVerified),
             colour=discord.Colour.gold(),
         )
+        e.set_author(
+            name="speedrun.com",
+            icon_url="https://www.speedrun.com/images/1st.png",
+        )
         e.set_thumbnail(
             url="https://www.speedrun.com/themes/user/{}/image.png".format(userName)
         )
@@ -170,7 +174,11 @@ class SRC(commands.Cog):
     @commands.command(name="wrcount", aliases=["wrs"])
     async def wrcount(self, ctx, user: str):
         """`Counts the number of world records a user has.`"""
-        msg = await ctx.send("Loading...")
+        e = discord.Embed(
+            title="<a:loading:776255339716673566> Loading... (SRC API sucks so its going to take a while)",
+            colour=discord.Colour.gold(),
+        )
+        msg = await ctx.send(embed=e)
 
         data = await self.src.get("/users", "/{}/personal-bests".format(user))
         try:
@@ -181,12 +189,24 @@ class SRC(commands.Cog):
         fullgame_wr = sum([1 for pb in data if pb["place"] == 1 and not pb["run"]["level"]])
         ils_wr = sum([1 for pb in data if pb["place"] == 1 and pb["run"]["level"]])
 
-        await msg.edit(content=
-            "{} has ".format(await self.username(await self.get_user_id(user)))
-            + f"**{fullgame_wr + ils_wr}** world records:\n**{fullgame_wr}** full game "
-            + f"record{'s' if fullgame_wr > 1 else ''} and "
-            + f"**{ils_wr}** IL record{'s' if ils_wr > 1 else ''}"
+        userName = await self.username(await self.get_user_id(user))
+
+        e = discord.Embed(
+            title="{}".format(userName),
+            description="Full games: `{}`\nIndividual levels: `{}`\nTotal: `{}`".format(
+                fullgame_wr, ils_wr, fullgame_wr + ils_wr
+            ),
+            colour=discord.Colour.gold(),
         )
+        e.set_author(
+            name="speedrun.com",
+            icon_url="https://www.speedrun.com/images/1st.png",
+        )
+        e.set_thumbnail(
+            url="https://www.speedrun.com/themes/user/{}/image.png".format(userName)
+        )
+
+        await msg.edit(embed=e)
 
     @commands.group(aliases=["gm"], example=["group"], invoke_without_command=True)
     async def gamemoderatorsof(self, ctx, arg=None):
