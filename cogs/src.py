@@ -421,6 +421,10 @@ class SRC(commands.Cog):
                 regex = regex.groups()
                 level = regex[0]
                 category = regex[1]
+        
+        async with self.session.get("https://www.speedrun.com/api/v1/games?name={}".format(game)) as res:
+            _json = json.loads(await res.text())
+            game = _json["data"][0]["id"]
 
         params = {"game": game, "name": category, "subcats": subcategories}
 
