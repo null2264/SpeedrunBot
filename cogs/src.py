@@ -480,7 +480,7 @@ class SRC(commands.Cog):
                 break
 
             page += 1
-            gameData = await self.get("https://www.speedrun.com/api/v1/runs?game={}&status=new&max=200&embed=game&offset={}".format(game, page*200))
+            gameData = await self.get("https://www.speedrun.com/api/v1/runs?game={}&status=new&max=200&embed=game&offset={}".format(game["id"], page*200))
         runPending = gameData["pagination"]["size"] + gameData["pagination"]["offset"]
 
         e = discord.Embed(
