@@ -9,6 +9,10 @@ from discord.ext import commands
 
 import config
 
+extensions = []
+for filename in os.listdir('./cogs'):
+    if filename.endswith('.py'):
+        extensions.append(f'cogs.{filename[:-3]}')
 
 class MangoManBot(commands.Bot):
     def __init__(self):
@@ -33,12 +37,20 @@ class MangoManBot(commands.Bot):
                 name=('Over my Mangoes | Prefix mm!')
             )
         )
-        for filename in os.listdir('./cogs'):
-            if filename.endswith('.py'):
-                self.load_extension(f'cogs.{filename[:-3]}')
+        for extension in extensions:
+            self.load_extension(extension)
 
     def run(self):
         super().run(config.token, reconnect=True)
+    
+    async def close(self):
+        for extension in extensions:
+            try:
+                self.unload_extension(extension)
+            except Exception as e:
+                print(e)
+        
+        await super().close()
 
     @property
     def config(self):
