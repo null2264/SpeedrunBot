@@ -403,6 +403,15 @@ class SRC(commands.Cog):
         link = levels["data"][0]["links"][-1]["uri"]
         await getSubCats("levels", levels["data"][0]["id"], subcats, params)
         return formatLink(link, params) 
+    
+    async def gameId(self, game: str):
+        async with self.session.get("https://www.speedrun.com/api/v1/games?name={}".format(game)) as res:
+            _json = json.loads(await res.text())
+            try:
+                return _json["data"][0]["id"]
+            except IndexError:
+                # Maybe its id after all?
+                return game
 
     @commands.command(usage="<game> [category|individual level(category)] [subcategories...]", aliases=["lb"])
     async def leaderboard(self, ctx, game: str, category: str = None, *subcategories: str):
@@ -422,9 +431,7 @@ class SRC(commands.Cog):
                 level = regex[0]
                 category = regex[1]
         
-        async with self.session.get("https://www.speedrun.com/api/v1/games?name={}".format(game)) as res:
-            _json = json.loads(await res.text())
-            game = _json["data"][0]["id"]
+        game = await self.gameId(game)
 
         params = {"game": game, "name": category, "subcats": subcategories}
 
