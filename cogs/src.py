@@ -404,11 +404,11 @@ class SRC(commands.Cog):
         await getSubCats("levels", levels["data"][0]["id"], subcats, params)
         return formatLink(link, params) 
     
-    async def gameId(self, game: str):
+    async def game(self, game: str):
         async with self.session.get("https://www.speedrun.com/api/v1/games?name={}".format(game)) as res:
             _json = json.loads(await res.text())
             try:
-                return _json["data"][0]["id"]
+                return _json["data"][0]
             except IndexError:
                 # Maybe its id after all?
                 return game
@@ -431,9 +431,9 @@ class SRC(commands.Cog):
                 level = regex[0]
                 category = regex[1]
         
-        game = await self.gameId(game)
+        game = await self.game(game)
 
-        params = {"game": game, "name": category, "subcats": subcategories}
+        params = {"game": game["id"], "name": category, "subcats": subcategories}
 
         if category and level:
             params["name"] = level
@@ -454,6 +454,48 @@ class SRC(commands.Cog):
                 ping=True
             )
             return await pages.start(ctx)
+    
+    async def get(self, url):
+        async with self.session.get(url) as res:
+            return json.loads(await res.text())
+
+    @commands.command(aliases=["pdg", "unverified", "uv"])
+    async def pending(self, ctx, *, game: str):
+        """Get game's pending runs count."""
+
+        e = discord.Embed(
+            title="<a:loading:776255339716673566> Loading... (SRC API sucks so its going to take a while)",
+            colour=discord.Colour.gold(),
+        )
+        msg = await ctx.reply(embed=e)
+
+        game = await self.game(game)
+        
+        # Loop to get pending runs
+        page = 0
+        gameData = await self.get("https://www.speedrun.com/api/v1/runs?game={}&status=new&max=200&embed=game&offset={}".format(game["id"], page*200))
+        while True:
+            pagination = gameData["pagination"]["links"]
+            if not pagination or "next" not in pagination[-1].values():
+                break
+
+            page += 1
+            gameData = await self.get("https://www.speedrun.com/api/v1/runs?game={}&status=new&max=200&embed=game&offset={}".format(game, page*200))
+        runPending = gameData["pagination"]["size"] + gameData["pagination"]["offset"]
+
+        e = discord.Embed(
+            title="{}".format(game["names"]["international"]),
+            description="Pending Runs:\n `{}`".format(runPending),
+            colour=discord.Colour.gold(),
+        )
+        e.set_author(
+            name="speedrun.com",
+            icon_url="https://www.speedrun.com/images/1st.png",
+        )
+        e.set_thumbnail(
+            url=game["assets"]["cover-large"]["uri"],
+        )
+        await msg.edit(embed=e)
     
     @leaderboard.error
     async def leaderboard_error(self, ctx, error):
