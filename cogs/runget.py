@@ -74,9 +74,7 @@ class RunGetHandler(commands.Cog):
             channel = self.client.get_guild(710400258793799681).get_channel(808445072948723732)
 
         for gameId in self.games:
-            page = 0
-            while page < 10:
-                offset = 200*page
+            for offset in range(0, 2000, 200)
                 async with self.session.get(f"https://www.speedrun.com/api/v1/runs?game={gameId}&status=verified&orderby=verify-date&direction=desc&max=200&embed=game,players,category.variables,level&{offset}") as r:
                     try:
                         runs_json = json.loads(await r.text())
@@ -152,7 +150,6 @@ class RunGetHandler(commands.Cog):
                         except KeyError as err:
                             print(err)
                             await self.removeRun(run["id"])
-                page += 1
 
     @src_update.before_loop
     async def before_update(self):
