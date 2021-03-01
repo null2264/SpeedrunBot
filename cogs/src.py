@@ -6,6 +6,7 @@ import re
 
 from .utilities.formatting import realtime, pformat
 from .utilities.paginator import MMMenu, MMReplyMenu
+from dateutil import parser
 from discord.ext import commands, menus
 from speedrunpy import SpeedrunPy, errors as srcError
 
@@ -107,7 +108,7 @@ class SRC(commands.Cog):
         self.session = aiohttp.ClientSession()
         self.src = SpeedrunPy(session=self.session)
         self.reLevelAndCat = re.compile(r"(.*)\((.*)\)")
-
+        self.baseUrl = "https://www.speedrun.com/api/v1"
 
     @commands.command(aliases=["v"])
     async def verified(self, ctx, user: str, game: str = None):
@@ -405,7 +406,8 @@ class SRC(commands.Cog):
         return formatLink(link, params) 
     
     async def game(self, game: str):
-        async with self.session.get("https://www.speedrun.com/api/v1/games?name={}".format(game)) as res:
+        """Get game data from sr.c"""
+        async with self.session.get("{}/games?name={}".format(self.baseUrl, game)) as res:
             _json = json.loads(await res.text())
             try:
                 return _json["data"][0]
@@ -459,8 +461,8 @@ class SRC(commands.Cog):
         async with self.session.get(url) as res:
             return json.loads(await res.text())
 
-    @commands.command(aliases=["pdg", "unverified", "uv"])
-    async def pending(self, ctx, *, game: str):
+    @commands.command(aliases=["uv"])
+    async def unverified(self, ctx, *, game: str):
         """Get game's pending runs count."""
 
         e = discord.Embed(
@@ -532,6 +534,91 @@ class SRC(commands.Cog):
         )
         return await pages.start(ctx)
 
+    def subcategoryName(self, runVariable, catVariable):
+        """Get subcategory name (ex: Set Seed - Random Seed, PC)"""
+        subcategoryName = []
+        for var in runVariable:
+            foundVar = [c for c in catVariable["data"] if c["id"] == var[0]]
+            if foundVar and foundVar[0]["is-subcategory"]:
+                subcategoryName += [foundVar[0]["values"]["values"][var[1]]["label"]]
+        return subcategoryName
+    
+    @commands.command()
+    @commands.has_permissions(manage_messages = True)
+    async def pending(self, ctx, channel: discord.TextChannel, game: str):
+        """Send pending runs to a channel"""
+        game = await self.game(game)
+
+        e = discord.Embed(
+            title="<a:loading:776255339716673566> Sending pending runs...",
+            colour=discord.Colour.gold(),
+        )
+        self.initMsg = await ctx.reply(embed=e)
+
+        await channel.purge(limit=None)
+        
+        offset = 0
+        while True:
+            async with self.session.get("{}/runs?game={}&status=new&embed=game,players,category.variables,level&max=200&offset={}".format(self.baseUrl, game["id"], offset)) as res:
+                data = json.loads(await res.text())
+
+            pagination = data["pagination"]
+            if not pagination["links"] or "next" not in pagination["links"][-1].values():
+                runPending = pagination["size"] + pagination["offset"]
+                break
+            
+            for run in data["data"]:
+                gameData = run["game"]["data"]
+                levData = run["level"]["data"]
+                catData = run["category"]["data"]
+                if catData:
+                    subcategoryName = self.subcategoryName(run["values"].items(), catData["variables"])
+                if catData["type"] == "per-level":
+                    categoryName = levData["name"] + ": " + catData["name"] + " - " + ", ".join(subcategoryName)
+                else:
+                    categoryName = catData["name"]
+
+                players = [
+                    player["names"]["international"] if player["rel"] == "user" else player["name"] for player in run["players"]["data"]
+                ]
+                e = discord.Embed(
+                    title="{} by {}".format(
+                        realtime(run["times"]["primary_t"]),
+                        ",".join(players),
+                    ),
+                    url=run["weblink"],
+                    colour=discord.Colour(0xFFFFF0),
+                    timestamp=parser.isoparse(run["date"]),
+                )
+                e.set_author(
+                    name="{} - {}".format(
+                        gameData["names"]["international"], 
+                        categoryName,
+                    )
+                )
+                e.add_field(
+                    name="Submitted at", 
+                    value="`{}`".format(parser.isoparse(run["submitted"])),
+                )
+                e.set_thumbnail(url=gameData["assets"]["cover-large"]["uri"])
+
+                await channel.send(embed=e)
+
+            offset += 200
+
+        eTotal = discord.Embed(
+            title="Total Runs",
+            description="`{}` runs".format(runPending),
+            colour=discord.Colour(0xFFFFF0),
+        )
+        eTotal.set_thumbnail(url=gameData["assets"]["cover-large"]["uri"])
+        await channel.send(embed=eTotal)
+
+        e = discord.Embed(
+            title="Pending runs has been sent",
+            colour=discord.Colour.gold(),
+        )
+        await self.initMsg.edit(embed=e)
 
 def setup(client):
     client.add_cog(SRC(client))

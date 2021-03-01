@@ -294,5 +294,9 @@ class General(commands.Cog):
                 await bot_owner.send(f'{ctx.author} has suggested {suggestion}')
             await ctx.send("Thank for your suggestion. The owner will review your suggestion")
 
+    @commands.command()
+    async def welcome(self, ctx):
+        await ctx.send("Welcome! <:mangoWelcome:815960591263989861>")
+
 def setup(client):
     client.add_cog(General(client))
