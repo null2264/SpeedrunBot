@@ -611,7 +611,6 @@ class SRC(commands.Cog):
             description="`{}` runs".format(runPending),
             colour=discord.Colour(0xFFFFF0),
         )
-        eTotal.set_thumbnail(url=gameData["assets"]["cover-large"]["uri"])
         await channel.send(embed=eTotal)
 
         e = discord.Embed(
