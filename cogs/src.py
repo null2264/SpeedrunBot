@@ -562,11 +562,6 @@ class SRC(commands.Cog):
             async with self.session.get("{}/runs?game={}&status=new&embed=game,players,category.variables,level&max=200&offset={}".format(self.baseUrl, game["id"], offset)) as res:
                 data = json.loads(await res.text())
 
-            pagination = data["pagination"]
-            if not pagination["links"] or "next" not in pagination["links"][-1].values():
-                runPending = pagination["size"] + pagination["offset"]
-                break
-            
             for run in data["data"]:
                 gameData = run["game"]["data"]
                 levData = run["level"]["data"]
@@ -601,9 +596,13 @@ class SRC(commands.Cog):
                     value="`{}`".format(parser.isoparse(run["submitted"])),
                 )
                 e.set_thumbnail(url=gameData["assets"]["cover-large"]["uri"])
-
+            
                 await channel.send(embed=e)
 
+            pagination = data["pagination"]
+            if not pagination["links"] or "next" not in pagination["links"][-1].values():
+                runPending = pagination["size"] + pagination["offset"]
+                break
             offset += 200
 
         eTotal = discord.Embed(
