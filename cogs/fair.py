@@ -15,7 +15,7 @@ class Fair(commands.Cog):
         if message.author.bot:
             return
 
-        bad_words = ["fair", "ⓕⓐⓘⓡ", "ɹıɐɟ", "justo", "adil"]
+        bad_words = ["fair", "ⓕⓐⓘⓡ", "ɹıɐɟ","faİr", "justo", "adil"]
         count = 0
         fair = ""
 
