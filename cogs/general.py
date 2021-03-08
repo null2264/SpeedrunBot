@@ -22,14 +22,14 @@ class MyHelpCommand(commands.MinimalHelpCommand):
 
 
 class General(commands.Cog):
-    def __init__(self, client):
-        self.client = client
-        self._original_help_command = client.help_command
-        client.help_command = MyHelpCommand()
-        client.help_command.cog = self
+    def __init__(self, bot):
+        self.bot = bot
+        self._original_help_command = bot.help_command
+        bot.help_command = MyHelpCommand()
+        bot.help_command.cog = self
 
     def cog_unload(self):
-        self.client.help_command = self._original_help_command
+        self.bot.help_command = self._original_help_command
 
     # Events
     @commands.Cog.listener()
@@ -59,7 +59,7 @@ class General(commands.Cog):
             colour=discord.Colour(0xFFFFF0),
             timestamp=ctx.message.created_at,
         )
-        embed.set_thumbnail(url=self.client.user.avatar_url)
+        embed.set_thumbnail(url=self.bot.user.avatar_url)
         embed.add_field(name="Mango Man Bot Team", value="<@564610598248120320>, and <@186713080841895936>")
         embed.add_field(
             name="discord.py",
@@ -251,7 +251,7 @@ class General(commands.Cog):
         emojiname=emojiname.replace(" ","_")
         match=re.findall(r"\b(?<!<)\w+\b",emojiname,re.I)
         emojiname=match[0].lower()
-        for emoji_type in self.client.emojis:
+        for emoji_type in self.bot.emojis:
             emoji_name=emoji_type.name.lower()
             if emoji_name == emojiname:
                 emoji=emoji_type
@@ -284,7 +284,7 @@ class General(commands.Cog):
           564610598248120320,
           186713080841895936,
         )
-        owners = [self.client.get_user(id) for id in owners]
+        owners = [self.bot.get_user(id) for id in owners]
 
         if suggestion == None:
             await ctx.send("Please type a suggjestion to suggest smhmyhead")
@@ -298,5 +298,5 @@ class General(commands.Cog):
     async def welcome(self, ctx):
         await ctx.send("Welcome! <:mangoWelcome:815960591263989861>")
 
-def setup(client):
-    client.add_cog(General(client))
+def setup(bot):
+    bot.add_cog(General(bot))

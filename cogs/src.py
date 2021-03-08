@@ -103,8 +103,8 @@ class LeaderboardPageSource(menus.ListPageSource):
 
 
 class SRC(commands.Cog):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
         self.session = aiohttp.ClientSession()
         self.src = SpeedrunPy(session=self.session)
         self.reLevelAndCat = re.compile(r"(.*)\((.*)\)")
@@ -618,5 +618,5 @@ class SRC(commands.Cog):
         )
         await self.initMsg.edit(embed=e)
 
-def setup(client):
-    client.add_cog(SRC(client))
+def setup(bot):
+    bot.add_cog(SRC(bot))

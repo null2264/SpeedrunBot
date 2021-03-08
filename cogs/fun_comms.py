@@ -10,8 +10,8 @@ from .utilities.barter import Piglin
 
 class Fun(commands.Cog):
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
         self.pins = []
     
     # Commands
@@ -484,5 +484,5 @@ class Fun(commands.Cog):
         )
         await ctx.reply(embed=e)
 
-def setup(client):
-    client.add_cog(Fun(client))
+def setup(bot):
+    bot.add_cog(Fun(bot))

@@ -8,8 +8,8 @@ from discord.ext import commands, tasks
 
 
 class RunGetHandler(commands.Cog):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
         self.games = (
             'k6q474zd', # Minecraft (Classic)
             '46w382n1', # Minecraft: Pocket Edition Lite
@@ -19,9 +19,9 @@ class RunGetHandler(commands.Cog):
             'j1nejgx1', # Minecraft: Pi Edition
             '4d792zz1', # ClassiCube
         )
-        self.client.loop.create_task(self.asyncInit())
-        self.session = self.client.session
-        self.db = self.client.db
+        self.bot.loop.create_task(self.asyncInit())
+        self.session = self.bot.session
+        self.db = self.bot.db
     
     async def asyncInit(self):
         """`__init__` but async"""
@@ -67,11 +67,11 @@ class RunGetHandler(commands.Cog):
     @tasks.loop(minutes=1.0)
     async def src_update(self):
         # hardcoding this idc
-        if self.client.user.id == 810573928782757950:
+        if self.bot.user.id == 810573928782757950:
             # Testing server
-            channel = self.client.get_guild(745481731133669476).get_channel(807494660745986050)
+            channel = self.bot.get_guild(745481731133669476).get_channel(807494660745986050)
         else:
-            channel = self.client.get_guild(710400258793799681).get_channel(808445072948723732)
+            channel = self.bot.get_guild(710400258793799681).get_channel(808445072948723732)
 
         for gameId in self.games:
             for offset in range(0, 2000, 200):
@@ -154,8 +154,8 @@ class RunGetHandler(commands.Cog):
     @src_update.before_loop
     async def before_update(self):
         print('Getting runs...')
-        await self.client.wait_until_ready()
+        await self.bot.wait_until_ready()
 
 
-def setup(client):
-    client.add_cog(RunGetHandler(client))
+def setup(bot):
+    bot.add_cog(RunGetHandler(bot))

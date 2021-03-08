@@ -11,8 +11,8 @@ from discord.ext import commands
 class ErrorHandler(commands.Cog):
     """Handle errors."""
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -49,5 +49,5 @@ class ErrorHandler(commands.Cog):
                 type(error), error, error.__traceback__, file=sys.stderr
             )
 
-def setup(client):
-    client.add_cog(ErrorHandler(client))
+def setup(bot):
+    bot.add_cog(ErrorHandler(bot))

@@ -4,8 +4,8 @@ from discord.ext import commands
 
 class Moderation(commands.Cog):
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
 
     @commands.command(aliases=["cc"])
     @commands.has_permissions(manage_messages = True)
@@ -106,7 +106,7 @@ class Moderation(commands.Cog):
 
         filtered_words = {"mm!poll"}
 
-        if msg.author == self.client.user:
+        if msg.author == self.bot.user:
             return
         
         else:
@@ -114,5 +114,5 @@ class Moderation(commands.Cog):
                 if word in msg.content:
                     await msg.delete()
 
-def setup(client):
-    client.add_cog(Moderation(client))
+def setup(bot):
+    bot.add_cog(Moderation(bot))

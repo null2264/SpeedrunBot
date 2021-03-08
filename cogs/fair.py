@@ -7,8 +7,8 @@ from pytz import exceptions, timezone
 from discord.ext import commands
 
 class Fair(commands.Cog):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -129,5 +129,5 @@ class Fair(commands.Cog):
             f"{discord.utils.escape_mentions(ctx.message.author.display_name)} your timezone has been set to {timeZone}"
         )
 
-def setup(client):
-    client.add_cog(Fair(client))
+def setup(bot):
+    bot.add_cog(Fair(bot))

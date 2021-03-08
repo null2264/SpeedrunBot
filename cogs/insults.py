@@ -3,8 +3,8 @@ from discord.ext import commands
 
 class Insults(commands.Cog):
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -21,5 +21,5 @@ class Insults(commands.Cog):
                 except UnboundLocalError:
                     pass
 
-def setup(client):
-    client.add_cog(Insults(client))
+def setup(bot):
+    bot.add_cog(Insults(bot))
