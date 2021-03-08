@@ -51,6 +51,7 @@ class MangoManBot(commands.Bot):
                 print(e)
         
         await super().close()
+        await self.db.close()
 
     @property
     def config(self):
