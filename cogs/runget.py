@@ -146,8 +146,8 @@ class RunGet(commands.Cog):
                     if foundVar and foundVar[0]["is-subcategory"]:
                         subcategoryQuery += ["var-{}={}".format(var[0], var[1])]
                         subcategoryName += [foundVar[0]["values"]["values"][var[1]]["label"]]
+                categoryID = catData["id"]
                 if catData["type"] == "per-level":
-                    categoryID = catData["id"]
                     levelID = levData["id"]
                     categoryName = levData["name"] + ": " + catData["name"] + " - " + ", ".join(subcategoryName)
                     leaderboard = await self.getLeaderboard(run['game']['data']['id'], categoryID, levelID, subcategoryQuery)
@@ -156,7 +156,6 @@ class RunGet(commands.Cog):
                         if r["run"]["id"] == run["id"]:
                             rank = r["place"]
                 else:
-                    categoryID = catData["id"]
                     categoryName = catData["name"]
                     leaderboard = await self.getLeaderboard(gameId=run['game']['data']['id'], categoryId=categoryID, subcategory=subcategoryQuery)
                     _ = leaderboard["data"]["runs"]
@@ -185,6 +184,7 @@ class RunGet(commands.Cog):
                 await self.addRun(runId)
                 await channel.send(embed=a)
             except KeyError as err:
+                print(err)
                 await self.removeRun(runId)
             except TypeError:
                 # Something's wrong
