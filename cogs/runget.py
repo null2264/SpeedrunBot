@@ -13,26 +13,26 @@ from discord.ext import commands, tasks
 class RunGet(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        
+
         # New self.games will look like this:
         # self.games = {
         #     "gameId": [channelId, channelId2],
         #     "gameId2": [channelId],
         # }
         self.games = (
-            'k6q474zd', # Minecraft (Classic)
-            '46w382n1', # Minecraft: Pocket Edition Lite
-            'pd0wkq01', # Minecraft: New Nintendo 3DS Edition
-            'k6q4520d', # Minecraft 4K
-            '3dx2oz41', # Minecraft: Education Edition
-            'j1nejgx1', # Minecraft: Pi Edition
-            '4d792zz1', # ClassiCube
+            "k6q474zd",  # Minecraft (Classic)
+            "46w382n1",  # Minecraft: Pocket Edition Lite
+            "pd0wkq01",  # Minecraft: New Nintendo 3DS Edition
+            "k6q4520d",  # Minecraft 4K
+            "3dx2oz41",  # Minecraft: Education Edition
+            "j1nejgx1",  # Minecraft: Pi Edition
+            "4d792zz1",  # ClassiCube
         )
-        
+
         self.bot.loop.create_task(self.asyncInit())
         self.session = self.bot.session
         self.db = self.bot.db
-    
+
     async def asyncInit(self):
         """`__init__` but async"""
         # Create `sent_runs` table if its not exists
@@ -59,48 +59,48 @@ class RunGet(commands.Cog):
     async def addRun(self, run_id: str):
         """Add run_id to sent_runs variable and sent_runs table"""
         self.sent_runs += [run_id]
-        await self.db.execute(
-            "INSERT OR IGNORE INTO sent_runs VALUES (?)",
-            (run_id,)
-        )
+        await self.db.execute("INSERT OR IGNORE INTO sent_runs VALUES (?)", (run_id,))
         await self.db.commit()
-    
+
     async def removeRun(self, run_id: str):
         """Delete run_id from sent_runs variable and sent_runs table"""
         self.sent_runs -= [run_id]
-        await self.db.execute(
-            "DELETE FROM sent_runs WHERE run_id=?",
-            (run_id,)
-        )
+        await self.db.execute("DELETE FROM sent_runs WHERE run_id=?", (run_id,))
         await self.db.commit()
 
-    @backoff.on_exception(backoff.expo, aiohttp.ClientResponseError, max_tries=3, max_time=60)
+    @backoff.on_exception(
+        backoff.expo, aiohttp.ClientResponseError, max_tries=3, max_time=60
+    )
     async def srcRequest(self, query):
         """Request info from speedrun.com.
 
-        Use backoff to retry request when the request fails the first time 
+        Use backoff to retry request when the request fails the first time
         (Unless the error is 404 or 420 also ignore 200 because its not error)
         """
-        async with self.session.get("https://www.speedrun.com/api/v1{}".format(query)) as res:
+        async with self.session.get(
+            "https://www.speedrun.com/api/v1{}".format(query)
+        ) as res:
             if res.status not in (200, 420, 404):
                 print("D:")
                 raise aiohttp.ClientResponseError(res.request_info, res.history)
             _json = await res.json()
             return _json
 
-    async def getLeaderboard(self, gameId, categoryId, levelId=None, subcategory: list=[]):
+    async def getLeaderboard(
+        self, gameId, categoryId, levelId=None, subcategory: list = []
+    ):
         """Get leaderboard info from speedrun.com"""
         leaderboard = {}
         if levelId:
             leaderboard = await self.srcRequest(
                 "/leaderboards/{}/level/{}/{}?{}".format(
-                    gameId, levelId, categoryId, '&'.join(subcategory)
+                    gameId, levelId, categoryId, "&".join(subcategory)
                 )
             )
         else:
             leaderboard = await self.srcRequest(
                 "/leaderboards/{}/category/{}?{}".format(
-                    gameId, categoryId, '&'.join(subcategory)
+                    gameId, categoryId, "&".join(subcategory)
                 )
             )
         return leaderboard
@@ -112,12 +112,14 @@ class RunGet(commands.Cog):
         will be removed after per-server system implemented
         """
         # TODO: get channels from database
-        runs_json = await self.srcRequest(f"/runs?status=verified&orderby=verify-date&direction=desc&max=200&embed=game,players,category.variables,level&offset={offset}")
+        runs_json = await self.srcRequest(
+            f"/runs?status=verified&orderby=verify-date&direction=desc&max=200&embed=game,players,category.variables,level&offset={offset}"
+        )
         if not runs_json:
             print("Oof")
             return
 
-        for run in runs_json['data']:    
+        for run in runs_json["data"]:
             if run["game"]["data"]["id"] not in self.games:
                 continue
 
@@ -125,7 +127,7 @@ class RunGet(commands.Cog):
                 continue
 
             runId = run["id"]
-            gameName = run['game']['data']['names']['international']
+            gameName = run["game"]["data"]["names"]["international"]
             cover = run["game"]["data"]["assets"]["cover-large"]["uri"]
             verifyDate = run["status"]["verify-date"]
             players = []
@@ -142,22 +144,38 @@ class RunGet(commands.Cog):
                 subcategoryQuery = []
                 subcategoryName = []
                 for var in runVars.items():
-                    foundVar = [c for c in catData["variables"]["data"] if c["id"] == var[0]]
+                    foundVar = [
+                        c for c in catData["variables"]["data"] if c["id"] == var[0]
+                    ]
                     if foundVar and foundVar[0]["is-subcategory"]:
                         subcategoryQuery += ["var-{}={}".format(var[0], var[1])]
-                        subcategoryName += [foundVar[0]["values"]["values"][var[1]]["label"]]
+                        subcategoryName += [
+                            foundVar[0]["values"]["values"][var[1]]["label"]
+                        ]
                 categoryID = catData["id"]
                 if catData["type"] == "per-level":
                     levelID = levData["id"]
-                    categoryName = levData["name"] + ": " + catData["name"] + " - " + ", ".join(subcategoryName)
-                    leaderboard = await self.getLeaderboard(run['game']['data']['id'], categoryID, levelID, subcategoryQuery)
+                    categoryName = (
+                        levData["name"]
+                        + ": "
+                        + catData["name"]
+                        + " - "
+                        + ", ".join(subcategoryName)
+                    )
+                    leaderboard = await self.getLeaderboard(
+                        run["game"]["data"]["id"], categoryID, levelID, subcategoryQuery
+                    )
                     _ = leaderboard["data"]["runs"]
                     for r in _:
                         if r["run"]["id"] == run["id"]:
                             rank = r["place"]
                 else:
                     categoryName = catData["name"]
-                    leaderboard = await self.getLeaderboard(gameId=run['game']['data']['id'], categoryId=categoryID, subcategory=subcategoryQuery)
+                    leaderboard = await self.getLeaderboard(
+                        gameId=run["game"]["data"]["id"],
+                        categoryId=categoryID,
+                        subcategory=subcategoryQuery,
+                    )
                     _ = leaderboard["data"]["runs"]
                     for r in _:
                         if r["run"]["id"] == run["id"]:
@@ -171,14 +189,20 @@ class RunGet(commands.Cog):
 
             try:
                 a = discord.Embed(
-                    title="{} by {}".format(realtime(igt if igt else rta), ', '.join(players)),
+                    title="{} by {}".format(
+                        realtime(igt if igt else rta), ", ".join(players)
+                    ),
                     url=link,
                     colour=discord.Color(0xFFFFF0),
-                    timestamp=parser.isoparse(playDate)
+                    timestamp=parser.isoparse(playDate),
                 )
                 a.set_author(name="{} - {}".format(gameName, categoryName))
                 a.add_field(name="Leaderboard Rank", value=str(rank))
-                a.add_field(name="Verified at", value="`{}`".format(parser.isoparse(verifyDate)), inline=False)
+                a.add_field(
+                    name="Verified at",
+                    value="`{}`".format(parser.isoparse(verifyDate)),
+                    inline=False,
+                )
                 a.set_thumbnail(url=cover)
 
                 await self.addRun(runId)
@@ -194,18 +218,24 @@ class RunGet(commands.Cog):
     async def src_update(self):
         if self.bot.user.id in (810573928782757950, 733622032901603388):
             # Testing server
-            channel = self.bot.get_guild(745481731133669476).get_channel(815600668396093461)
+            channel = self.bot.get_guild(745481731133669476).get_channel(
+                815600668396093461
+            )
         else:
             # TODO: make this thing per-server
-            channel = self.bot.get_guild(710400258793799681).get_channel(808445072948723732)
+            channel = self.bot.get_guild(710400258793799681).get_channel(
+                808445072948723732
+            )
 
         # Get and send recently verified runs
-        futures = [self.getRecentlyVerified(offset, channel) for offset in range(0, 2000, 200)]
+        futures = [
+            self.getRecentlyVerified(offset, channel) for offset in range(0, 2000, 200)
+        ]
         await asyncio.gather(*futures)
 
     @src_update.before_loop
     async def before_update(self):
-        print('Getting runs...')
+        print("Getting runs...")
         await self.bot.wait_until_ready()
 
     @commands.command()
