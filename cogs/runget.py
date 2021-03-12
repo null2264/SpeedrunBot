@@ -159,8 +159,6 @@ class RunGet(commands.Cog):
                         levData["name"]
                         + ": "
                         + catData["name"]
-                        + " - "
-                        + ", ".join(subcategoryName)
                     )
                     leaderboard = await self.getLeaderboard(
                         run["game"]["data"]["id"], categoryID, levelID, subcategoryQuery
@@ -171,6 +169,9 @@ class RunGet(commands.Cog):
                             rank = r["place"]
                 else:
                     categoryName = catData["name"]
+                    categoryName = (
+                        catData["name"]
+                    )
                     leaderboard = await self.getLeaderboard(
                         gameId=run["game"]["data"]["id"],
                         categoryId=categoryID,
@@ -180,6 +181,8 @@ class RunGet(commands.Cog):
                     for r in _:
                         if r["run"]["id"] == run["id"]:
                             rank = r["place"]
+                if subcategoryName:
+                    categoryName += " - " + ", ".join(subcategoryName)
 
             for player in run["players"]["data"]:
                 if player["rel"] == "guest":
