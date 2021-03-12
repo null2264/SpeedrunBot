@@ -185,6 +185,7 @@ class RunGet(commands.Cog):
                 await self.addRun(runId)
                 await channel.send(embed=a)
             except KeyError as err:
+                print(err)
                 await self.removeRun(runId)
             except TypeError:
                 # Something's wrong
