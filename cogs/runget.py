@@ -9,6 +9,39 @@ from .utilities.formatting import realtime, pformat
 from dateutil import parser
 from discord.ext import commands, tasks
 
+@backoff.on_exception(
+    backoff.expo, aiohttp.ClientResponseError, max_tries=3, max_time=60
+)
+async def srcRequest(query):
+    """Request info from speedrun.com.
+
+    Use backoff to retry request when the request fails the first time
+    (Unless the error is 404 or 420 also ignore 200 because its not error)
+    """
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://www.speedrun.com/api/v1{}".format(query)
+        ) as res:
+            if res.status not in (200, 420, 404):
+                print("D:")
+                raise aiohttp.ClientResponseError(res.request_info, res.history)
+            _json = await res.json()
+            return _json
+
+class Game(object):
+    __slots__ = ("id", "name")
+    def __init__(self, data):
+        self.id = data["id"]
+        self.name = data["names"]["international"]
+
+class srcGame(commands.Converter):
+    async def convert(self, ctx, argument):
+        try:
+            gameData = await srcRequest("/games/{}".format(argument))
+            return Game(gameData["data"])
+        except KeyError:
+            gameData = await srcRequest("/games?name={}".format(argument))
+            return Game(gameData["data"])
 
 class RunGet(commands.Cog):
     def __init__(self, bot):
@@ -45,15 +78,35 @@ class RunGet(commands.Cog):
             """
         )
         await self.db.commit()
+        await self.db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS guilds
+            (
+                game_id TEXT,
+                guild_id INTEGER,
+                channel_id INTEGER
+            )
+            """
+        )
+        await self.db.commit()
 
         # Try get sent_runs from database
         try:
-            curr = await self.db.execute("SELECT * FROM sent_runs")
-            rows = await curr.fetchall()
-            self.sent_runs = [row[0] for row in rows]
+            async with self.db.execute("SELECT * FROM sent_runs") as curr:
+                rows = await curr.fetchall()
+                self.sent_runs = [row[0] for row in rows]
         except Exception as exc:
             print("Something went wrong!", exc)
             self.sent_runs = []
+
+        self.gameIds = {}
+        async with self.db.execute("SELECT * FROM guilds") as curr:
+            async for row in curr:
+                try:
+                    self.gameIds[row[0]].update({row[1]: row[2]})
+                except KeyError:
+                    self.gameIds[row[0]] = {row[1]: row[2]}
+
         self.src_update.start()
 
     async def addRun(self, run_id: str):
@@ -68,59 +121,41 @@ class RunGet(commands.Cog):
         await self.db.execute("DELETE FROM sent_runs WHERE run_id=?", (run_id,))
         await self.db.commit()
 
-    @backoff.on_exception(
-        backoff.expo, aiohttp.ClientResponseError, max_tries=3, max_time=60
-    )
-    async def srcRequest(self, query):
-        """Request info from speedrun.com.
-
-        Use backoff to retry request when the request fails the first time
-        (Unless the error is 404 or 420 also ignore 200 because its not error)
-        """
-        async with self.session.get(
-            "https://www.speedrun.com/api/v1{}".format(query)
-        ) as res:
-            if res.status not in (200, 420, 404):
-                print("D:")
-                raise aiohttp.ClientResponseError(res.request_info, res.history)
-            _json = await res.json()
-            return _json
-
     async def getLeaderboard(
         self, gameId, categoryId, levelId=None, subcategory: list = []
     ):
         """Get leaderboard info from speedrun.com"""
         leaderboard = {}
         if levelId:
-            leaderboard = await self.srcRequest(
+            leaderboard = await srcRequest(
                 "/leaderboards/{}/level/{}/{}?{}".format(
                     gameId, levelId, categoryId, "&".join(subcategory)
-                )
+                ),
             )
         else:
-            leaderboard = await self.srcRequest(
+            leaderboard = await srcRequest(
                 "/leaderboards/{}/category/{}?{}".format(
                     gameId, categoryId, "&".join(subcategory)
-                )
+                ),
             )
         return leaderboard
 
-    async def getRecentlyVerified(self, offset, channel):
+    async def getRecentlyVerified(self, offset):
         """Handle recently verified runs
 
         channel argument is temporary,
         will be removed after per-server system implemented
         """
         # TODO: get channels from database
-        runs_json = await self.srcRequest(
-            f"/runs?status=verified&orderby=verify-date&direction=desc&max=200&embed=game,players,category.variables,level&offset={offset}"
+        runs_json = await srcRequest(
+            f"/runs?status=verified&orderby=verify-date&direction=desc&max=200&embed=game,players,category.variables,level&offset={offset}",
         )
         if not runs_json:
             print("Oof")
             return
 
         for run in runs_json["data"]:
-            if run["game"]["data"]["id"] not in self.games:
+            if run["game"]["data"]["id"] not in self.gameIds.keys():
                 continue
 
             if run["id"] in self.sent_runs:
@@ -209,12 +244,16 @@ class RunGet(commands.Cog):
                 a.set_thumbnail(url=cover)
 
                 await self.addRun(runId)
-                await channel.send(embed=a)
+                channels = [ch if ch else user for user, ch in self.gameIds[run["game"]["data"]["id"]].items()]
+                for target in channels:
+                    target = self.bot.get_channel(target) or self.bot.get_user(target)
+                    await target.send(embed=a)
             except KeyError as err:
                 print(err)
                 await self.removeRun(runId)
-            except TypeError:
+            except TypeError as err:
                 # Something's wrong
+                print(err)
                 continue
 
     @tasks.loop(minutes=1.0)
@@ -232,7 +271,7 @@ class RunGet(commands.Cog):
 
         # Get and send recently verified runs
         futures = [
-            self.getRecentlyVerified(offset, channel) for offset in range(0, 2000, 200)
+            self.getRecentlyVerified(offset) for offset in range(0, 2000, 200)
         ]
         await asyncio.gather(*futures)
 
@@ -241,11 +280,39 @@ class RunGet(commands.Cog):
         print("Getting runs...")
         await self.bot.wait_until_ready()
 
+
     @commands.command()
-    async def watchgame(self, ctx, gameId: str = None):
+    async def watchgame(self, ctx, game: srcGame, channel: discord.TextChannel = None):
         """Add a game to watchlist."""
         # TODO: Make converter to get gameId from game name/url
-        await ctx.reply("Not yet implemented")
+        isDM = ctx.message.guild is None
+
+        if not isDM and not channel:
+            return await ctx.reply("Usage: mm!watchgame <game id> [#channel]")
+
+        # target id = user id for DM or guild id
+        targetId = ctx.author.id if isDM else ctx.message.guild.id
+        try:
+            if targetId in self.gameIds[game.id]:
+                if not isDM and channel.id != self.gameIds[game.id][targetId]:
+                    # TODO: Make ability to replace channel id, use prompt (yes/no)
+                    return await ctx.reply("Already watching this game!")
+                return await ctx.reply("Already watching this game!")
+            raise KeyError
+        except KeyError:
+            await self.db.execute(
+                "INSERT INTO guilds VALUES (?, ?, ?)", (
+                    game.id, 
+                    targetId,
+                    None if isDM else channel.id
+                )
+            )
+            await self.db.commit()
+            try:
+                self.gameIds[game.id].update({targetId: None if isDM else channel.id})
+            except KeyError:
+                self.gameIds[game.id] = {targetId: None if isDM else channel.id}
+            return await ctx.reply("{} has been added to watchlist".format(game.name))
 
     @commands.command()
     async def unwatchgame(self, ctx, gameId: str = None):
