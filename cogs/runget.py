@@ -75,31 +75,22 @@ class RunGet(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        # New self.games will look like this:
-        # self.games = {
-        #     "gameId": [channelId, channelId2],
-        #     "gameId2": [channelId],
-        # }
-        self.games = (
-            "k6q474zd",  # Minecraft (Classic)
-            "46w382n1",  # Minecraft: Pocket Edition Lite
-            "pd0wkq01",  # Minecraft: New Nintendo 3DS Edition
-            "k6q4520d",  # Minecraft 4K
-            "3dx2oz41",  # Minecraft: Education Edition
-            "j1nejgx1",  # Minecraft: Pi Edition
-            "4d792zz1",  # ClassiCube
-        )
-
         self.bot.loop.create_task(self.asyncInit())
         self.session = self.bot.session
         self.db = self.bot.db
 
     def ownerOrPerms(**perms):
         original = commands.has_permissions(**perms).predicate
+
         async def check(ctx):
             if not ctx.guild:
                 return True
-            return ctx.guild.owner_id == ctx.author.id or await original(ctx)
+            return (
+                ctx.author.id in ctx.bot.master
+                or ctx.guild.owner_id == ctx.author.id
+                or await original(ctx)
+            )
+
         return commands.check(check)
 
     async def asyncInit(self):
@@ -135,6 +126,7 @@ class RunGet(commands.Cog):
             print("Something went wrong!", exc)
             self.sent_runs = []
 
+        # The new self.games
         self.gameIds = {}
         async with self.db.execute("SELECT * FROM guilds") as curr:
             async for row in curr:
@@ -293,17 +285,6 @@ class RunGet(commands.Cog):
 
     @tasks.loop(minutes=1.0)
     async def src_update(self):
-        # Legacy stuff, delete soon
-        # if self.bot.user.id in (810573928782757950, 733622032901603388):
-        #     # Testing server
-        #     channel = self.bot.get_guild(745481731133669476).get_channel(
-        #         815600668396093461
-        #     )
-        # else:
-        #     channel = self.bot.get_guild(710400258793799681).get_channel(
-        #         808445072948723732
-        #     )
-
         # Get and send recently verified runs
         futures = [self.getRecentlyVerified(offset) for offset in range(0, 2000, 200)]
         await asyncio.gather(*futures)
