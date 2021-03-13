@@ -6,6 +6,7 @@ import re
 
 from .utilities.formatting import realtime, pformat
 from .utilities.paginator import MMMenu, MMReplyMenu
+from .utilities.src import srcGame, srcRequest
 from dateutil import parser
 from discord.ext import commands, menus
 from speedrunpy import SpeedrunPy, errors as srcError
@@ -441,7 +442,7 @@ class SRC(commands.Cog):
         aliases=["lb"],
     )
     async def leaderboard(
-        self, ctx, game: str, category: str = None, *subcategories: str
+        self, ctx, game: srcGame, category: str = None, *subcategories: str
     ):
         """Get leaderboard of a game. Tips: Use "" for name with spaces"""
 
@@ -458,8 +459,6 @@ class SRC(commands.Cog):
                 regex = regex.groups()
                 level = regex[0]
                 category = regex[1]
-
-        game = await self.game(game)
 
         params = {"game": game["id"], "name": category, "subcats": subcategories}
 
@@ -486,16 +485,13 @@ class SRC(commands.Cog):
             return json.loads(await res.text())
 
     @commands.command(aliases=["uv"])
-    async def unverified(self, ctx, *, game: str):
+    async def unverified(self, ctx, *, game: srcGame):
         """Get game's pending runs count."""
-
         e = discord.Embed(
             title="<a:loading:776255339716673566> Loading... (SRC API sucks so its going to take a while)",
             colour=discord.Colour.gold(),
         )
         msg = await ctx.reply(embed=e)
-
-        game = await self.game(game)
 
         # Loop to get pending runs
         page = 0
@@ -547,7 +543,7 @@ class SRC(commands.Cog):
         await self.initMsg.edit(embed=e)
 
     @commands.command()
-    async def categories(self, ctx, game: str):
+    async def categories(self, ctx, game: srcGame):
         """Get categories of a game"""
         e = discord.Embed(
             title="<a:loading:776255339716673566> Loading...",
@@ -555,7 +551,7 @@ class SRC(commands.Cog):
         )
         self.initMsg = await ctx.reply(embed=e)
 
-        data = await self.src.get_games(name=game, embeds=["categories.variables"])
+        data = await self.src.get_games(name=str(game), embeds=["categories.variables"])
 
         cats = data[0]
 
@@ -577,10 +573,8 @@ class SRC(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
-    async def pending(self, ctx, channel: discord.TextChannel, game: str):
+    async def pending(self, ctx, channel: discord.TextChannel, game: srcGame):
         """Send pending runs to a channel"""
-        game = await self.game(game)
-
         e = discord.Embed(
             title="<a:loading:776255339716673566> Sending pending runs...",
             colour=discord.Colour.gold(),

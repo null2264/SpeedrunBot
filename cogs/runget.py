@@ -7,6 +7,7 @@ import json
 
 from .utilities.formatting import realtime, pformat
 from .utilities.paginator import MMReplyMenu
+from .utilities.src import srcGame, srcRequest
 from dateutil import parser
 from discord.ext import commands, tasks, menus
 
@@ -27,48 +28,6 @@ class GameList(menus.ListPageSource):
             colour=discord.Colour.gold(),
         )
         return e
-
-
-@backoff.on_exception(
-    backoff.expo, aiohttp.ClientResponseError, max_tries=3, max_time=60
-)
-async def srcRequest(query):
-    """Request info from speedrun.com.
-
-    Use backoff to retry request when the request fails the first time
-    (Unless the error is 404 or 420 also ignore 200 because its not error)
-    """
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            "https://www.speedrun.com/api/v1{}".format(query)
-        ) as res:
-            if res.status not in (200, 420, 404):
-                print("D:")
-                raise aiohttp.ClientResponseError(res.request_info, res.history)
-            _json = await res.json()
-            return _json
-
-
-class Game(object):
-    __slots__ = ("id", "name", "cover")
-
-    def __init__(self, data):
-        self.id = data["id"]
-        self.name = data["names"]["international"]
-        self.cover = data["assets"]["cover-large"]["uri"]
-
-
-class srcGame(commands.Converter):
-    async def convert(self, ctx, argument):
-        try:
-            gameData = await srcRequest("/games/{}".format(argument))
-        except KeyError:
-            gameData = await srcRequest("/games?name={}".format(argument))
-        finally:
-            try:
-                return Game(gameData["data"])
-            except KeyError:
-                raise commands.BadArgument('Game "{}" not Found'.format(argument))
 
 
 class RunGet(commands.Cog):
