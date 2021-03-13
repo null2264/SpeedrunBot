@@ -6,6 +6,7 @@ from datetime import timedelta
 from pytz import exceptions, timezone
 from discord.ext import commands
 
+
 class Fair(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -15,7 +16,7 @@ class Fair(commands.Cog):
         if message.author.bot:
             return
 
-        bad_words = ["fair", "ⓕⓐⓘⓡ", "ɹıɐɟ","faİr", "justo", "adil"]
+        bad_words = ["fair", "ⓕⓐⓘⓡ", "ɹıɐɟ", "faİr", "justo", "adil"]
         count = 0
         fair = ""
 
@@ -128,6 +129,7 @@ class Fair(commands.Cog):
         await ctx.send(
             f"{discord.utils.escape_mentions(ctx.message.author.display_name)} your timezone has been set to {timeZone}"
         )
+
 
 def setup(bot):
     bot.add_cog(Fair(bot))

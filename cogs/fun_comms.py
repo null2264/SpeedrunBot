@@ -8,12 +8,12 @@ from discord.ext import commands
 from random import choice, randint, random
 from .utilities.barter import Piglin
 
-class Fun(commands.Cog):
 
+class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.pins = []
-    
+
     # Commands
     @commands.cooldown(1, 30, commands.BucketType.guild)
     @commands.command(aliases=["fs"])
@@ -24,7 +24,7 @@ class Fun(commands.Cog):
             f"{(ctx.message.author.mention)} -> your seed is a {total_eyes} eye"
         )
 
-    @commands.cooldown(1, 30, commands.BucketType.guild)    
+    @commands.cooldown(1, 30, commands.BucketType.guild)
     @commands.command(aliases=["vfindseed", "visualfindseed", "vfs"])
     async def findseedbutvisual(self, ctx):
         """`Test your Minecraft RNG, but you can physaclly see it`"""
@@ -233,7 +233,9 @@ class Fun(commands.Cog):
             )
 
     @commands.cooldown(1, 25, type=commands.BucketType.user)
-    @commands.command(aliases=["piglin"], usage="[amount of gold]", example="{prefix}barter 64")
+    @commands.command(
+        aliases=["piglin"], usage="[amount of gold]", example="{prefix}barter 64"
+    )
     async def barter(self, ctx, gold: int = 64):
         """Barter with Minecraft's Piglin. (Based on JE 1.16.1, before nerf)"""
         # limit gold amount up to 2240 (Minecraft inventory limit)
@@ -273,8 +275,10 @@ class Fun(commands.Cog):
             }.get(name, "❔")
 
         e = discord.Embed(
-            title="Bartering with {} gold{}  <a:loading:776255339716673566>".format(gold, "s" if gold > 1 else ""),
-            colour=discord.Colour.gold()
+            title="Bartering with {} gold{}  <a:loading:776255339716673566>".format(
+                gold, "s" if gold > 1 else ""
+            ),
+            colour=discord.Colour.gold(),
         )
         e.set_author(
             name=f"{ctx.message.author}",
@@ -283,9 +287,7 @@ class Fun(commands.Cog):
         a = discord.Embed(
             title="Bartering with {} gold{}".format(gold, "s" if gold > 1 else ""),
             description="You got:\n\n{}".format(
-                "\n".join(["{} → {}".format(
-                    emoji(v[0]), v[1]) for v in items.values()]
-                )
+                "\n".join(["{} → {}".format(emoji(v[0]), v[1]) for v in items.values()])
             ),
             colour=discord.Colour.gold(),
         )
@@ -301,12 +303,14 @@ class Fun(commands.Cog):
     @commands.command()
     async def joke(self, ctx):
         """`Ask the bot a joke and he will tell you a joke that will defenetly make you laugh no cap`"""
-        data = requests.get('https://official-joke-api.appspot.com/jokes/random').json()
-        embed = discord.Embed(title = data['setup'], description = data['punchline'], color = 0xf4565a)
+        data = requests.get("https://official-joke-api.appspot.com/jokes/random").json()
+        embed = discord.Embed(
+            title=data["setup"], description=data["punchline"], color=0xF4565A
+        )
         await ctx.send(embed=embed)
 
     @commands.cooldown(1, 10, commands.BucketType.user)
-    @commands.command(aliases=['random'])
+    @commands.command(aliases=["random"])
     async def rng(self, ctx, minimum: int, maximum: int):
         """`Choose a minimum and a maximum number and the bot will choose a random number`"""
         await ctx.send(randint(minimum, maximum))
@@ -319,75 +323,76 @@ class Fun(commands.Cog):
 
     @commands.cooldown(1, 10, commands.BucketType.guild)
     @commands.command()
-    async def roast (self, ctx, member: discord.Member = None):
+    async def roast(self, ctx, member: discord.Member = None):
         """`Roast Someone >:)`"""
-        roast = ["You're as useless as the 'ueue' in 'queue'",
-        "If I had a face like yours, I'd sue my parents",
-        "Some day you'll go far... and I hope you stay there",
-        "You must have been born on a highway cos' that's where most accidents happen",
-        "If i had a dollar for every time you said something smart, I'd be broke",
-        "When you were born the doctor threw you out the window and the window threw you back",
-        "If your brain was dynamite, there wouldn’t be enough to blow your hat off",
-        "Your face makes onions cry",
-        "I thought of you today, it reminded me to take out the trash",
-        "When karma comes back to punch you in the face, I want to be there in case it needs help",
-        "I thought I had the flu, but then I realized your face makes me sick to my stomach",
-        "You're like Mondays, everyone hates you",
-        "Keep rolling your eyes, you might find a barain baxck there",
-        "My phone battery lasts longer than your relationships, and my battery only lasts less than an hour FYI",
-        "I never forget a face, but in your case I would love to make an exception...",
-        "You're so ugly when you look in the mirror your reflection looks away",
-        "You're so ugly when you were born, the doctor said aww what a treasure and your mom said yeah lets bury it",
-        "Maybe you should eat make-up so you’ll be pretty on the inside too",
-        "When you were born, the doctor came out to the waiting room and said to your dad, I'm very sorry. We did everything we could. But he pulled through",
-        "It’s a shame you can’t Photoshop your personality.",
-        "Whoever told you to be yourself gave you really bad advice",
-        "If you could use 100 percent of your brain's power, you'd still be incredibly stupid. 100 percent of nothing is still nothing",
-        "Go ahead, tell us everything you know. It'll only take ten seconds",
-        "It’s not Halloweeen - take your mask off",
-        "You have a face like a smoke alarm. Beat at it until it sounds off",
-        "I never saw anybody take so long to type, and with such little result",
-        "My hair straightener is hotter than you",
-        "I’d explain it to you but I left my English-to-Dumbass Dictionary at home",
-        "I don't exactly hate you, but if you were on fire and I had water, I'd drink it",
-        "I'd love to insult you, but I'm afraid I cannot perform as well as nature did",
-        "Everyone brings happiness to a room. I do when I enter, you do when you leave",
-        "The zoo called. They're wondering how you got out of your cage",
-        "I suggest you do a little soul searching. You might just find one",
-        "I’m visualizing duck tape over your mouth",
-        "You should use a glue stick instead of chapstick",
-        "I love what you have done to your hair, How'd you get it to come so far of your nostrils?",
-        "I would roast you, but my mom said not to burn trash",
-        "I'm not saying I hate you, but I would unplug your life support to charge my phone",
-        "If tour family were Starwars figures, you'd be the special edition",
-        "Over watching paint dry and listening to you, I choose watching paint dry",
-        "If you uploaded a video to Youtube with your face, it would get demonetized for `Harmful or dangerous content`",
-        "Life is great, you should get one",
-        "Fake hair, fake nails, fake smile. Are you sure you weren't made in China?",
-        "Your face looks like something I would draw with my non dominant hand.",
-        "You're kind of like Rapunzel except instead of letting down your hair, you let down everyone in your life.",
-        "I'd agree with you but then we'd both be wrong.",
-        "Brains aren't everything, in fact in your case they're nothing.",
-        "Why is it acceptable for you to be an idiot but not for me to point it out?",
-        "Aww, it’s so cute when you try to talk about things you don’t understand.",
-        "At least when I do a handstand my stomach doesn't hit me in the face.",
-        "My hair straightener is hotter than you.",
-        "If you’re going to be a smart ass, first you have to be smart, otherwise you’re just an ass.",
-        "People like you are the reason why people like us need meds and therapy.",
-        "Some people drink from the fountain of knowledge - it appears that you merely gargled",
-        "When I see your face theres not a thing I would change... Except for the direction im walking in",
-        "You sound reasonable... Time to up my medication",
-        "I bet your brain feels as good as new, seeing that you never use it",
-        "Did your parents ever ask you to run away from home?",
-        "Hey, I found your nose, it’s in my business again!",
-        "Is your butt jealous of the amount of crap that just came out of your mouth?",
-        "Thinking isn't your strong suit, is it?",
-        "Roses are red, violets are blue, god made us beautiful, but what happened to you?",
-        "Are you in great physical pain, or is that your thinking expression?",
-        "Your body fat is about as evenly distributed as wealth in the US economy.",
-        "Where’s your off button?",
-        "It may be that your whole purpose in life is simply to serve as a warning to others",
-        "You're the reason the gene pool needs a lifeguard",
+        roast = [
+            "You're as useless as the 'ueue' in 'queue'",
+            "If I had a face like yours, I'd sue my parents",
+            "Some day you'll go far... and I hope you stay there",
+            "You must have been born on a highway cos' that's where most accidents happen",
+            "If i had a dollar for every time you said something smart, I'd be broke",
+            "When you were born the doctor threw you out the window and the window threw you back",
+            "If your brain was dynamite, there wouldn’t be enough to blow your hat off",
+            "Your face makes onions cry",
+            "I thought of you today, it reminded me to take out the trash",
+            "When karma comes back to punch you in the face, I want to be there in case it needs help",
+            "I thought I had the flu, but then I realized your face makes me sick to my stomach",
+            "You're like Mondays, everyone hates you",
+            "Keep rolling your eyes, you might find a barain baxck there",
+            "My phone battery lasts longer than your relationships, and my battery only lasts less than an hour FYI",
+            "I never forget a face, but in your case I would love to make an exception...",
+            "You're so ugly when you look in the mirror your reflection looks away",
+            "You're so ugly when you were born, the doctor said aww what a treasure and your mom said yeah lets bury it",
+            "Maybe you should eat make-up so you’ll be pretty on the inside too",
+            "When you were born, the doctor came out to the waiting room and said to your dad, I'm very sorry. We did everything we could. But he pulled through",
+            "It’s a shame you can’t Photoshop your personality.",
+            "Whoever told you to be yourself gave you really bad advice",
+            "If you could use 100 percent of your brain's power, you'd still be incredibly stupid. 100 percent of nothing is still nothing",
+            "Go ahead, tell us everything you know. It'll only take ten seconds",
+            "It’s not Halloweeen - take your mask off",
+            "You have a face like a smoke alarm. Beat at it until it sounds off",
+            "I never saw anybody take so long to type, and with such little result",
+            "My hair straightener is hotter than you",
+            "I’d explain it to you but I left my English-to-Dumbass Dictionary at home",
+            "I don't exactly hate you, but if you were on fire and I had water, I'd drink it",
+            "I'd love to insult you, but I'm afraid I cannot perform as well as nature did",
+            "Everyone brings happiness to a room. I do when I enter, you do when you leave",
+            "The zoo called. They're wondering how you got out of your cage",
+            "I suggest you do a little soul searching. You might just find one",
+            "I’m visualizing duck tape over your mouth",
+            "You should use a glue stick instead of chapstick",
+            "I love what you have done to your hair, How'd you get it to come so far of your nostrils?",
+            "I would roast you, but my mom said not to burn trash",
+            "I'm not saying I hate you, but I would unplug your life support to charge my phone",
+            "If tour family were Starwars figures, you'd be the special edition",
+            "Over watching paint dry and listening to you, I choose watching paint dry",
+            "If you uploaded a video to Youtube with your face, it would get demonetized for `Harmful or dangerous content`",
+            "Life is great, you should get one",
+            "Fake hair, fake nails, fake smile. Are you sure you weren't made in China?",
+            "Your face looks like something I would draw with my non dominant hand.",
+            "You're kind of like Rapunzel except instead of letting down your hair, you let down everyone in your life.",
+            "I'd agree with you but then we'd both be wrong.",
+            "Brains aren't everything, in fact in your case they're nothing.",
+            "Why is it acceptable for you to be an idiot but not for me to point it out?",
+            "Aww, it’s so cute when you try to talk about things you don’t understand.",
+            "At least when I do a handstand my stomach doesn't hit me in the face.",
+            "My hair straightener is hotter than you.",
+            "If you’re going to be a smart ass, first you have to be smart, otherwise you’re just an ass.",
+            "People like you are the reason why people like us need meds and therapy.",
+            "Some people drink from the fountain of knowledge - it appears that you merely gargled",
+            "When I see your face theres not a thing I would change... Except for the direction im walking in",
+            "You sound reasonable... Time to up my medication",
+            "I bet your brain feels as good as new, seeing that you never use it",
+            "Did your parents ever ask you to run away from home?",
+            "Hey, I found your nose, it’s in my business again!",
+            "Is your butt jealous of the amount of crap that just came out of your mouth?",
+            "Thinking isn't your strong suit, is it?",
+            "Roses are red, violets are blue, god made us beautiful, but what happened to you?",
+            "Are you in great physical pain, or is that your thinking expression?",
+            "Your body fat is about as evenly distributed as wealth in the US economy.",
+            "Where’s your off button?",
+            "It may be that your whole purpose in life is simply to serve as a warning to others",
+            "You're the reason the gene pool needs a lifeguard",
         ]
 
         no_roast = {
@@ -416,11 +421,11 @@ class Fun(commands.Cog):
             )
 
             await ctx.send(embed=a)
-        
+
         else:
             e = discord.Embed(
                 colour=discord.Color(0xE41919),
-                description=f'{member.mention} {choice(roast)}',
+                description=f"{member.mention} {choice(roast)}",
             )
 
             await ctx.send(embed=e)
@@ -430,14 +435,14 @@ class Fun(commands.Cog):
     async def someone(self, ctx):
         """`Discord's mistake`"""
         await ctx.send(choice(ctx.guild.members).mention)
-    
+
     @commands.cooldown(1, 10, commands.BucketType.user)
     @commands.command(aliases=["dl"])
     async def dreamluck(self, ctx):
         """`Test your Minecraft RNG, but in a bot command`"""
         blaze = sum([1 for i in range(306) if random() * 100 <= 50])
 
-        pearl = sum([1 for i in range(263) if random() <= (20/473)])
+        pearl = sum([1 for i in range(263) if random() <= (20 / 473)])
 
         e = discord.Embed(
             title=f"Your Pearl Trades -> {pearl}/262",
@@ -454,7 +459,7 @@ class Fun(commands.Cog):
 
     @commands.cooldown(1, 30, commands.BucketType.user)
     @commands.command()
-    async def findseeds(self, ctx, attempts: int=100):
+    async def findseeds(self, ctx, attempts: int = 100):
         """`Findseed but in bulk"""
         if attempts > 100000:
             attempts = 100000
@@ -475,7 +480,12 @@ class Fun(commands.Cog):
 
         e = discord.Embed(
             title=f"This is what you got in {attempts} seeds",
-            description="\n".join(["**{}** eyes: `{}` seeds".format(k, v) for k, v in sorted(eyes.items())]),
+            description="\n".join(
+                [
+                    "**{}** eyes: `{}` seeds".format(k, v)
+                    for k, v in sorted(eyes.items())
+                ]
+            ),
             color=discord.Colour(0x349988),
         )
         e.set_author(
@@ -483,6 +493,7 @@ class Fun(commands.Cog):
             icon_url=ctx.message.author.avatar_url,
         )
         await ctx.reply(embed=e)
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))

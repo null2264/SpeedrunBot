@@ -17,7 +17,7 @@ class ErrorHandler(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         # This prevents any commands with local handlers being handled here in on_command_error.
-        if hasattr(ctx.command, 'on_error'):
+        if hasattr(ctx.command, "on_error"):
             return
 
         # This prevents any cogs with an overwritten cog_command_error being handled here.
@@ -28,7 +28,7 @@ class ErrorHandler(commands.Cog):
 
         # Allows us to check for original exceptions raised and sent to CommandInvokeError.
         # If nothing is found. We keep the exception passed to on_command_error.
-        error = getattr(error, 'original', error)
+        error = getattr(error, "original", error)
 
         if isinstance(error, commands.CommandNotFound):
             return
@@ -40,7 +40,7 @@ class ErrorHandler(commands.Cog):
             await asyncio.sleep(round(error.retry_after))
             await bot_msg.delete()
             return
-        
+
         else:
             print(
                 "Ignoring exception in command {}:".format(ctx.command), file=sys.stderr
@@ -48,6 +48,7 @@ class ErrorHandler(commands.Cog):
             traceback.print_exception(
                 type(error), error, error.__traceback__, file=sys.stderr
             )
+
 
 def setup(bot):
     bot.add_cog(ErrorHandler(bot))

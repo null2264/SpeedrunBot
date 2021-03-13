@@ -21,7 +21,7 @@ class CategoriesPageSource(menus.ListPageSource):
             [cat for cat in cats if cat["type"] == "per-game"],
             per_page=1,
         )
-    
+
     def format_page(self, menu, category):
         e = discord.Embed(
             title=category["name"],
@@ -42,9 +42,13 @@ class CategoriesPageSource(menus.ListPageSource):
             if not var["is-subcategory"]:
                 continue
             for val in var["values"]["values"].values():
-                e.add_field(name=val["label"], value=val["rules"] or "No rules specified.", inline=False if val["rules"] else True)
+                e.add_field(
+                    name=val["label"],
+                    value=val["rules"] or "No rules specified.",
+                    inline=False if val["rules"] else True,
+                )
         return e
-        
+
 
 class LeaderboardPageSource(menus.ListPageSource):
     def __init__(self, ctx, data):
@@ -67,7 +71,11 @@ class LeaderboardPageSource(menus.ListPageSource):
         for value in self.data["values"]:
             for variable in self.data["variables"]["data"]:
                 if variable["id"] == value:
-                    self.varName += [variable["values"]["values"][self.data["values"][value]]["label"]]
+                    self.varName += [
+                        variable["values"]["values"][self.data["values"][value]][
+                            "label"
+                        ]
+                    ]
 
         self.catName = ": ".join(self.catName)
         if self.varName:
@@ -85,7 +93,10 @@ class LeaderboardPageSource(menus.ListPageSource):
             icon_url="https://www.speedrun.com/images/1st.png",
         )
         e.set_thumbnail(url=self.gameData["assets"]["cover-large"]["uri"])
-        e.set_footer(text="Requested by {}".format(str(self.ctx.author)), icon_url=self.ctx.author.avatar_url)
+        e.set_footer(
+            text="Requested by {}".format(str(self.ctx.author)),
+            icon_url=self.ctx.author.avatar_url,
+        )
 
         for run in runs:
             players = []
@@ -187,7 +198,9 @@ class SRC(commands.Cog):
         except KeyError:
             return await ctx.send(f"There's no user called `{user}`")
 
-        fullgame_wr = sum([1 for pb in data if pb["place"] == 1 and not pb["run"]["level"]])
+        fullgame_wr = sum(
+            [1 for pb in data if pb["place"] == 1 and not pb["run"]["level"]]
+        )
         ils_wr = sum([1 for pb in data if pb["place"] == 1 and pb["run"]["level"]])
 
         userName = await self.username(await self.get_user_id(user))
@@ -336,14 +349,16 @@ class SRC(commands.Cog):
         )
         await ctx.send(embed=a)
 
-    async def subcats(self, _type: str, category: str, queries: list=None):
+    async def subcats(self, _type: str, category: str, queries: list = None):
         """Get subcategory, from a list."""
         if not queries:
             return []
         queries = [pformat(q) for q in queries]
-        
+
         res = []
-        subCats = await self.src.get("/{}/".format(_type), "{}/variables".format(category))
+        subCats = await self.src.get(
+            "/{}/".format(_type), "{}/variables".format(category)
+        )
         for data in subCats["data"]:
             if data["is-subcategory"] == False:
                 continue
@@ -354,7 +369,9 @@ class SRC(commands.Cog):
                     break
         return res
 
-    async def catOrLevel(self, game: str, name=None, levCatName=None, subcats: list=[]):
+    async def catOrLevel(
+        self, game: str, name=None, levCatName=None, subcats: list = []
+    ):
         """Get category/IL (first in the leaderboard or from category's name)."""
         # TODO: Clean this code up!
         cats = await self.src.get_categories(game=game)
@@ -368,7 +385,7 @@ class SRC(commands.Cog):
             subcats = await self.subcats(_type, catId, subcats)
             for subcat in subcats:
                 params += ["var-{}={}".format(subcat[0], subcat[1])]
-        
+
         # if category name specified
         if name:
             # if levCatName is specificed, most likely its a ILs
@@ -379,7 +396,7 @@ class SRC(commands.Cog):
                         # If category is the same as input, and is full game cat, return link
                         link = cat.rawData["links"][-1]["uri"]
                         await getSubCats("categories", cat.id, subcats, params)
-                        return formatLink(link, params) 
+                        return formatLink(link, params)
             # Get IL id
             for lev in levels["data"]:
                 if pformat(lev["name"]) == pformat(name):
@@ -387,27 +404,31 @@ class SRC(commands.Cog):
                         # If ILs category name not specified, return the link
                         link = lev["links"][-1]["uri"]
                         await getSubCats("levels", lev["id"], subcats, params)
-                        return formatLink(link, params) 
-                    levCats = await self.src.get("/levels/", "{}/categories".format(lev["id"]))
+                        return formatLink(link, params)
+                    levCats = await self.src.get(
+                        "/levels/", "{}/categories".format(lev["id"])
+                    )
                     for cat in levCats["data"]:
                         if pformat(cat["name"]) == pformat(levCatName):
                             link = cat["links"][-1]["uri"]
                             await getSubCats("categories", cat["id"], subcats, params)
-                            return formatLink(link, params) 
+                            return formatLink(link, params)
 
         # if name is None:
         if cats[0].type == "per-game":
             link = cats[0].rawData["links"][-1]["uri"]
             await getSubCats("categories", cats[0].id, subcats, params)
-            return formatLink(link, params) 
+            return formatLink(link, params)
         # if ILs:
         link = levels["data"][0]["links"][-1]["uri"]
         await getSubCats("levels", levels["data"][0]["id"], subcats, params)
-        return formatLink(link, params) 
-    
+        return formatLink(link, params)
+
     async def game(self, game: str):
         """Get game data from sr.c"""
-        async with self.session.get("{}/games?name={}".format(self.baseUrl, game)) as res:
+        async with self.session.get(
+            "{}/games?name={}".format(self.baseUrl, game)
+        ) as res:
             _json = json.loads(await res.text())
             try:
                 return _json["data"][0]
@@ -415,10 +436,15 @@ class SRC(commands.Cog):
                 # Maybe its id after all?
                 return game
 
-    @commands.command(usage="<game> [category|individual level(category)] [subcategories...]", aliases=["lb"])
-    async def leaderboard(self, ctx, game: str, category: str = None, *subcategories: str):
+    @commands.command(
+        usage="<game> [category|individual level(category)] [subcategories...]",
+        aliases=["lb"],
+    )
+    async def leaderboard(
+        self, ctx, game: str, category: str = None, *subcategories: str
+    ):
         """Get leaderboard of a game. Tips: Use "" for name with spaces"""
-        
+
         e = discord.Embed(
             title="<a:loading:776255339716673566> Loading...",
             colour=discord.Colour.gold(),
@@ -432,7 +458,7 @@ class SRC(commands.Cog):
                 regex = regex.groups()
                 level = regex[0]
                 category = regex[1]
-        
+
         game = await self.game(game)
 
         params = {"game": game["id"], "name": category, "subcats": subcategories}
@@ -451,12 +477,10 @@ class SRC(commands.Cog):
                 raise srcError.DataNotFound
 
             pages = MMReplyMenu(
-                source=LeaderboardPageSource(ctx, lb),
-                init_msg=self.initMsg,
-                ping=True
+                source=LeaderboardPageSource(ctx, lb), init_msg=self.initMsg, ping=True
             )
             return await pages.start(ctx)
-    
+
     async def get(self, url):
         async with self.session.get(url) as res:
             return json.loads(await res.text())
@@ -472,17 +496,25 @@ class SRC(commands.Cog):
         msg = await ctx.reply(embed=e)
 
         game = await self.game(game)
-        
+
         # Loop to get pending runs
         page = 0
-        gameData = await self.get("https://www.speedrun.com/api/v1/runs?game={}&status=new&max=200&embed=game&offset={}".format(game["id"], page*200))
+        gameData = await self.get(
+            "https://www.speedrun.com/api/v1/runs?game={}&status=new&max=200&embed=game&offset={}".format(
+                game["id"], page * 200
+            )
+        )
         while True:
             pagination = gameData["pagination"]["links"]
             if not pagination or "next" not in pagination[-1].values():
                 break
 
             page += 1
-            gameData = await self.get("https://www.speedrun.com/api/v1/runs?game={}&status=new&max=200&embed=game&offset={}".format(game["id"], page*200))
+            gameData = await self.get(
+                "https://www.speedrun.com/api/v1/runs?game={}&status=new&max=200&embed=game&offset={}".format(
+                    game["id"], page * 200
+                )
+            )
         runPending = gameData["pagination"]["size"] + gameData["pagination"]["offset"]
 
         e = discord.Embed(
@@ -498,10 +530,10 @@ class SRC(commands.Cog):
             url=game["assets"]["cover-large"]["uri"],
         )
         await msg.edit(embed=e)
-    
+
     @leaderboard.error
     async def leaderboard_error(self, ctx, error):
-        error = getattr(error, 'original', error)
+        error = getattr(error, "original", error)
         if isinstance(error, srcError.DataNotFound):
             e = discord.Embed(
                 title="<:error:783265883228340245> 404 - No data found",
@@ -513,7 +545,7 @@ class SRC(commands.Cog):
                 colour=discord.Colour.red(),
             )
         await self.initMsg.edit(embed=e)
-    
+
     @commands.command()
     async def categories(self, ctx, game: str):
         """Get categories of a game"""
@@ -524,7 +556,7 @@ class SRC(commands.Cog):
         self.initMsg = await ctx.reply(embed=e)
 
         data = await self.src.get_games(name=game, embeds=["categories.variables"])
-        
+
         cats = data[0]
 
         pages = MMReplyMenu(
@@ -542,9 +574,9 @@ class SRC(commands.Cog):
             if foundVar and foundVar[0]["is-subcategory"]:
                 subcategoryName += [foundVar[0]["values"]["values"][var[1]]["label"]]
         return subcategoryName
-    
+
     @commands.command()
-    @commands.has_permissions(manage_messages = True)
+    @commands.has_permissions(manage_messages=True)
     async def pending(self, ctx, channel: discord.TextChannel, game: str):
         """Send pending runs to a channel"""
         game = await self.game(game)
@@ -556,10 +588,14 @@ class SRC(commands.Cog):
         self.initMsg = await ctx.reply(embed=e)
 
         await channel.purge(limit=None)
-        
+
         offset = 0
         while True:
-            async with self.session.get("{}/runs?game={}&status=new&embed=game,players,category.variables,level&max=200&offset={}".format(self.baseUrl, game["id"], offset)) as res:
+            async with self.session.get(
+                "{}/runs?game={}&status=new&embed=game,players,category.variables,level&max=200&offset={}".format(
+                    self.baseUrl, game["id"], offset
+                )
+            ) as res:
                 data = json.loads(await res.text())
 
             for run in data["data"]:
@@ -567,14 +603,25 @@ class SRC(commands.Cog):
                 levData = run["level"]["data"]
                 catData = run["category"]["data"]
                 if catData:
-                    subcategoryName = self.subcategoryName(run["values"].items(), catData["variables"])
+                    subcategoryName = self.subcategoryName(
+                        run["values"].items(), catData["variables"]
+                    )
                 if catData["type"] == "per-level":
-                    categoryName = levData["name"] + ": " + catData["name"] + " - " + ", ".join(subcategoryName)
+                    categoryName = (
+                        levData["name"]
+                        + ": "
+                        + catData["name"]
+                        + " - "
+                        + ", ".join(subcategoryName)
+                    )
                 else:
                     categoryName = catData["name"]
 
                 players = [
-                    player["names"]["international"] if player["rel"] == "user" else player["name"] for player in run["players"]["data"]
+                    player["names"]["international"]
+                    if player["rel"] == "user"
+                    else player["name"]
+                    for player in run["players"]["data"]
                 ]
                 e = discord.Embed(
                     title="{} by {}".format(
@@ -587,20 +634,23 @@ class SRC(commands.Cog):
                 )
                 e.set_author(
                     name="{} - {}".format(
-                        gameData["names"]["international"], 
+                        gameData["names"]["international"],
                         categoryName,
                     )
                 )
                 e.add_field(
-                    name="Submitted at", 
+                    name="Submitted at",
                     value="`{}`".format(parser.isoparse(run["submitted"])),
                 )
                 e.set_thumbnail(url=gameData["assets"]["cover-large"]["uri"])
-            
+
                 await channel.send(embed=e)
 
             pagination = data["pagination"]
-            if not pagination["links"] or "next" not in pagination["links"][-1].values():
+            if (
+                not pagination["links"]
+                or "next" not in pagination["links"][-1].values()
+            ):
                 runPending = pagination["size"] + pagination["offset"]
                 break
             offset += 200
@@ -617,6 +667,7 @@ class SRC(commands.Cog):
             colour=discord.Colour.gold(),
         )
         await self.initMsg.edit(embed=e)
+
 
 def setup(bot):
     bot.add_cog(SRC(bot))

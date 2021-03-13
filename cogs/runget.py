@@ -6,8 +6,27 @@ import json
 
 
 from .utilities.formatting import realtime, pformat
+from .utilities.paginator import MMReplyMenu
 from dateutil import parser
-from discord.ext import commands, tasks
+from discord.ext import commands, tasks, menus
+
+
+class GameList(menus.ListPageSource):
+    def __init__(self, ctx, data):
+        self.ctx = ctx
+        super().__init__(
+            data,
+            per_page=10,
+        )
+
+    def format_page(self, menu, games):
+        target = self.ctx.message.guild or self.ctx.author
+        e = discord.Embed(
+            title="{}'s Watchlist".format(target.name),
+            description="\n".join(" • {}".format(game) for game in games),
+            colour=discord.Colour.gold(),
+        )
+        return e
 
 
 @backoff.on_exception(
@@ -31,21 +50,25 @@ async def srcRequest(query):
 
 
 class Game(object):
-    __slots__ = ("id", "name")
+    __slots__ = ("id", "name", "cover")
 
     def __init__(self, data):
         self.id = data["id"]
         self.name = data["names"]["international"]
+        self.cover = data["assets"]["cover-large"]["uri"]
 
 
 class srcGame(commands.Converter):
     async def convert(self, ctx, argument):
         try:
             gameData = await srcRequest("/games/{}".format(argument))
-            return Game(gameData["data"])
         except KeyError:
             gameData = await srcRequest("/games?name={}".format(argument))
-            return Game(gameData["data"])
+        finally:
+            try:
+                return Game(gameData["data"])
+            except KeyError:
+                raise commands.BadArgument('Game "{}" not Found'.format(argument))
 
 
 class RunGet(commands.Cog):
@@ -107,9 +130,9 @@ class RunGet(commands.Cog):
         self.gameIds = {}
         async with self.db.execute("SELECT * FROM guilds") as curr:
             async for row in curr:
-                rowDict = {"name": row[1], row[2]: row[3]}
+                rowDict = {"name": row[1], "targets": {row[2]: row[3]}}
                 try:
-                    self.gameIds[row[0]].update(rowDict)
+                    self.gameIds[row[0]]["targets"].update(rowDict["targets"])
                 except KeyError:
                     self.gameIds[row[0]] = rowDict
 
@@ -147,12 +170,7 @@ class RunGet(commands.Cog):
         return leaderboard
 
     async def getRecentlyVerified(self, offset):
-        """Handle recently verified runs
-
-        channel argument is temporary,
-        will be removed after per-server system implemented
-        """
-        # TODO: get channels from database
+        """Handle recently verified runs"""
         runs_json = await srcRequest(
             f"/runs?status=verified&orderby=verify-date&direction=desc&max=200&embed=game,players,category.variables,level&offset={offset}",
         )
@@ -184,6 +202,7 @@ class RunGet(commands.Cog):
             if catData:
                 subcategoryQuery = []
                 subcategoryName = []
+                # Get subcategory from run's variables
                 for var in runVars.items():
                     foundVar = [
                         c for c in catData["variables"]["data"] if c["id"] == var[0]
@@ -200,22 +219,19 @@ class RunGet(commands.Cog):
                     leaderboard = await self.getLeaderboard(
                         run["game"]["data"]["id"], categoryID, levelID, subcategoryQuery
                     )
-                    _ = leaderboard["data"]["runs"]
-                    for r in _:
-                        if r["run"]["id"] == run["id"]:
-                            rank = r["place"]
                 else:
-                    categoryName = catData["name"]
                     categoryName = catData["name"]
                     leaderboard = await self.getLeaderboard(
                         gameId=run["game"]["data"]["id"],
                         categoryId=categoryID,
                         subcategory=subcategoryQuery,
                     )
-                    _ = leaderboard["data"]["runs"]
-                    for r in _:
-                        if r["run"]["id"] == run["id"]:
-                            rank = r["place"]
+                # Get rank from leaderboard
+                _ = leaderboard["data"]["runs"]
+                for r in _:
+                    if r["run"]["id"] == run["id"]:
+                        rank = r["place"]
+                # Add subcategory name to category name
                 if subcategoryName:
                     categoryName += " - " + ", ".join(subcategoryName)
 
@@ -246,11 +262,19 @@ class RunGet(commands.Cog):
                 await self.addRun(runId)
                 channels = [
                     ch if ch else user
-                    for user, ch in self.gameIds[run["game"]["data"]["id"]].items()
+                    for user, ch in self.gameIds[run["game"]["data"]["id"]][
+                        "targets"
+                    ].items()
                 ]
-                for target in channels:
-                    target = self.bot.get_channel(target) or self.bot.get_user(target)
-                    await target.send(embed=a)
+                for targetId in channels:
+                    target = self.bot.get_channel(targetId) or self.bot.get_user(
+                        targetId
+                    )
+                    try:
+                        await target.send(embed=a)
+                    except discord.Forbidden:
+                        # Bot have no permission
+                        continue
             except KeyError as err:
                 print(err)
                 await self.removeRun(runId)
@@ -261,16 +285,16 @@ class RunGet(commands.Cog):
 
     @tasks.loop(minutes=1.0)
     async def src_update(self):
-        if self.bot.user.id in (810573928782757950, 733622032901603388):
-            # Testing server
-            channel = self.bot.get_guild(745481731133669476).get_channel(
-                815600668396093461
-            )
-        else:
-            # TODO: make this thing per-server
-            channel = self.bot.get_guild(710400258793799681).get_channel(
-                808445072948723732
-            )
+        # Legacy stuff, delete soon
+        # if self.bot.user.id in (810573928782757950, 733622032901603388):
+        #     # Testing server
+        #     channel = self.bot.get_guild(745481731133669476).get_channel(
+        #         815600668396093461
+        #     )
+        # else:
+        #     channel = self.bot.get_guild(710400258793799681).get_channel(
+        #         808445072948723732
+        #     )
 
         # Get and send recently verified runs
         futures = [self.getRecentlyVerified(offset) for offset in range(0, 2000, 200)]
@@ -281,7 +305,8 @@ class RunGet(commands.Cog):
         print("Getting runs...")
         await self.bot.wait_until_ready()
 
-    @commands.command()
+    @commands.command(aliases=["addgame"])
+    @commands.has_permissions(manage_guild=True)
     async def watchgame(self, ctx, game: srcGame, channel: discord.TextChannel = None):
         """Add a game to watchlist."""
         isDM = ctx.message.guild is None
@@ -292,11 +317,18 @@ class RunGet(commands.Cog):
         # target id = user id for DM or guild id
         targetId = ctx.author.id if isDM else ctx.message.guild.id
         try:
-            if targetId in self.gameIds[game.id]:
-                if not isDM and channel.id != self.gameIds[game.id][targetId]:
+            if targetId in self.gameIds[game.id]["targets"]:
+                e = discord.Embed(
+                    title="Already watching '{}'!".format(game.name),
+                    colour=discord.Colour.gold(),
+                )
+                if (
+                    not isDM
+                    and channel.id != self.gameIds[game.id]["targets"][targetId]
+                ):
                     # TODO: Add ability to replace channel id, use prompt (yes/no)
-                    return await ctx.reply("Already watching this game!")
-                return await ctx.reply("Already watching this game!")
+                    return await ctx.reply(embed=e)
+                return await ctx.reply(embed=e)
             raise KeyError
         except KeyError:
             await self.db.execute(
@@ -304,14 +336,24 @@ class RunGet(commands.Cog):
                 (game.id, game.name, targetId, None if isDM else channel.id),
             )
             await self.db.commit()
-            targetDict = {"name": game.name, targetId: None if isDM else channel.id}
+            targetDict = {
+                "name": game.name,
+                "targets": {targetId: None if isDM else channel.id},
+            }
             try:
-                self.gameIds[game.id].update(targetDict)
+                self.gameIds[game.id]["targets"].update(targetDict["targets"])
             except KeyError:
                 self.gameIds[game.id] = targetDict
-            return await ctx.reply("{} has been added to watchlist".format(game.name))
 
-    @commands.command()
+            e = discord.Embed(
+                title="'{}' has been added to watchlist".format(game.name),
+                colour=discord.Colour.gold(),
+            )
+            e.set_thumbnail(url=game.cover)
+            return await ctx.reply(embed=e)
+
+    @commands.command(aliases=["deletegame"])
+    @commands.has_permissions(manage_guild=True)
     async def unwatchgame(self, ctx, game: srcGame):
         """Remove a game from watchlist."""
         isDM = ctx.message.guild is None
@@ -320,10 +362,14 @@ class RunGet(commands.Cog):
         targetId = ctx.author.id if isDM else ctx.message.guild.id
 
         try:
-            if targetId not in self.gameIds[game.id]:
+            if targetId not in self.gameIds[game.id]["targets"]:
                 raise KeyError
         except KeyError:
-            return await ctx.reply("{} is not in the watchlist!".format(game.name))
+            e = discord.Embed(
+                title="'{}' is not in the watchlist!".format(game.name),
+                colour=discord.Colour.gold(),
+            )
+            return await ctx.reply(embed=e)
 
         await self.db.execute(
             "DELETE FROM guilds WHERE game_id = ? AND guild_id = ?",
@@ -333,22 +379,41 @@ class RunGet(commands.Cog):
             ),
         )
         await self.db.commit()
-        self.gameIds[game.id].pop(targetId)
-        return await ctx.reply("{} has been removed from watchlist".format(game.name))
+        self.gameIds[game.id]["targets"].pop(targetId)
+
+        e = discord.Embed(
+            title="'{}' has been removed from watchlist".format(game.name),
+            colour=discord.Colour.gold(),
+        )
+        e.set_thumbnail(url=game.cover)
+        return await ctx.reply(embed=e)
 
     @commands.command()
     async def gamelist(self, ctx):
         """Get game watchlist"""
+        e = discord.Embed(
+            title="<a:loading:776255339716673566> Loading...",
+            colour=discord.Colour.gold(),
+        )
+        self.initMsg = await ctx.reply(embed=e)
+
         isDM = ctx.message.guild is None
 
         # target id = user id for DM or guild id
         targetId = ctx.author.id if isDM else ctx.message.guild.id
 
         guildGames = [
-            game["name"] for game in self.gameIds.values() if targetId in game
+            game["name"]
+            for game in self.gameIds.values()
+            if targetId in game["targets"]
         ]
 
-        await ctx.send("\n".join(guildGames) or "No game being watched")
+        pages = MMReplyMenu(
+            source=GameList(ctx, guildGames),
+            init_msg=self.initMsg,
+            ping=True,
+        )
+        return await pages.start(ctx)
 
 
 def setup(bot):

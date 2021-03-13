@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
 
-class Insults(commands.Cog):
 
+class Insults(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -20,6 +20,7 @@ class Insults(commands.Cog):
                     await message.reply(no_u)
                 except UnboundLocalError:
                     pass
+
 
 def setup(bot):
     bot.add_cog(Insults(bot))

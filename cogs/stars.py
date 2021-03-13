@@ -12,7 +12,7 @@ from typing import Union
 class Starred:
     __slots__ = ("id", "bot_message_id")
 
-    def __init__(self, message_id: int, bot_message_id: int=None):
+    def __init__(self, message_id: int, bot_message_id: int = None):
         self.id = message_id
         # Return none for Legacy support
         self.bot_message_id = bot_message_id
@@ -52,14 +52,16 @@ class Stars(commands.Cog):
                 conf = json.load(conf)
                 for guildId, data in conf.items():
                     try:
-                        self.starred[guildId] = [Starred(star[0], star[1]) for star in data["pins"]]
+                        self.starred[guildId] = [
+                            Starred(star[0], star[1]) for star in data["pins"]
+                        ]
                     except TypeError:
                         # Old starred format (without bot_message_id, remove soon)
                         self.starred[guildId] = [Starred(star) for star in data["pins"]]
         except FileNotFoundError:
-            with open('starboard_config.json', 'w+') as f:
+            with open("starboard_config.json", "w+") as f:
                 json.dump({}, f, indent=4)
-        self.spoilers = re.compile(r'\|\|(.+?)\|\|')
+        self.spoilers = re.compile(r"\|\|(.+?)\|\|")
 
     def is_mod(ctx):
         try:
@@ -75,7 +77,7 @@ class Stars(commands.Cog):
         except Exception as err:
             print(err)
             return None
-    
+
     def get_raw_starboard_config(self):
         try:
             with open("starboard_config.json", "r") as conf:
@@ -97,7 +99,9 @@ class Stars(commands.Cog):
 
     @starboard.command()
     @commands.check(is_mod)
-    async def setup(self, ctx, channel: Union[discord.TextChannel, str] = None, amount: int = 5):
+    async def setup(
+        self, ctx, channel: Union[discord.TextChannel, str] = None, amount: int = 5
+    ):
         """`Sets the channel for starboard (Only People with [Administator = True] can use this command)`"""
         if not isinstance(channel, str) and channel.guild.id != ctx.guild.id:
             return
@@ -109,13 +113,15 @@ class Stars(commands.Cog):
         except KeyError:
             sbConfig[str(ctx.guild.id)] = {}
             guildConfig = sbConfig[str(ctx.guild.id)]
-        
+
         try:
             amount = int(channel) if isinstance(channel, str) else amount
         except ValueError:
             pass
-        
-        guildConfig["channel"] = channel.id if isinstance(channel, discord.TextChannel) else 0
+
+        guildConfig["channel"] = (
+            channel.id if isinstance(channel, discord.TextChannel) else 0
+        )
         guildConfig["amount"] = amount
         if "pins" not in guildConfig:
             guildConfig["pins"] = []
@@ -123,13 +129,16 @@ class Stars(commands.Cog):
         # Save config to a json file
         self.save_starboard_config(sbConfig)
 
-        channelMentionOrDisabled = channel.mention if isinstance(channel, discord.TextChannel) else "`DISABLED`"
+        channelMentionOrDisabled = (
+            channel.mention
+            if isinstance(channel, discord.TextChannel)
+            else "`DISABLED`"
+        )
 
         e = discord.Embed(
             title="Starboard Setup",
             description="Channel: {}\nRequired stars: `{}`".format(
-                channelMentionOrDisabled,
-                amount
+                channelMentionOrDisabled, amount
             ),
             colour=discord.Colour(self.STAR_COLOUR),
         )
@@ -144,7 +153,7 @@ class Stars(commands.Cog):
         starboard = self.get_guild_starboard_config(payload.guild_id)
         if not starboard:
             return
-        
+
         if not starboard.channel:
             return
 
@@ -166,12 +175,14 @@ class Stars(commands.Cog):
             if not msg:
                 ch = self.bot.get_channel(payload.channel_id)
                 msg = await ch.fetch_message(msg_id)
-            count = sum([reaction.count for reaction in msg.reactions if str(reaction) == "⭐"])
+            count = sum(
+                [reaction.count for reaction in msg.reactions if str(reaction) == "⭐"]
+            )
             if count >= starboard.amount:
                 await self.star_message(starboard.channel, msg)
 
     def save_starboard_config(self, data):
-        temp = '{}-{}.tmp'.format(uuid.uuid4(), "starboard_config.json")
+        temp = "{}-{}.tmp".format(uuid.uuid4(), "starboard_config.json")
         with open(temp, "w") as tmp:
             json.dump(data.copy(), tmp, indent=4)
 
@@ -192,22 +203,35 @@ class Stars(commands.Cog):
                     name="[{}]".format(
                         embed.title if str(embed.title) != "Embed.Empty" else "\u200B"
                     ),
-                    value=embed.description or "\u200B", inline=False
+                    value=embed.description or "\u200B",
+                    inline=False,
                 )
                 for field in embed.fields:
                     e.add_field(name=field.name, value=field.value, inline=field.inline)
-            if embed.type == 'image' and not self.is_url_spoiler(message.content, embed.url):
+            if embed.type == "image" and not self.is_url_spoiler(
+                message.content, embed.url
+            ):
                 e.set_image(url=embed.url)
 
         if message.attachments:
             file = message.attachments[0]
             spoiler = file.is_spoiler()
-            if not spoiler and file.url.lower().endswith(('png', 'jpeg', 'jpg', 'gif', 'webp')):
+            if not spoiler and file.url.lower().endswith(
+                ("png", "jpeg", "jpg", "gif", "webp")
+            ):
                 e.set_image(url=file.url)
             elif spoiler:
-                e.add_field(name='Attachment', value=f'||[{file.filename}]({file.url})||', inline=False)
+                e.add_field(
+                    name="Attachment",
+                    value=f"||[{file.filename}]({file.url})||",
+                    inline=False,
+                )
             else:
-                e.add_field(name='Attachment', value=f'[{file.filename}]({file.url})', inline=False)
+                e.add_field(
+                    name="Attachment",
+                    value=f"[{file.filename}]({file.url})",
+                    inline=False,
+                )
 
         e.add_field(name="Original", value=f"[Jump!]({message.jump_url})", inline=False)
         e.set_author(name=message.author, icon_url=message.author.avatar_url)
@@ -223,7 +247,10 @@ class Stars(commands.Cog):
             self.starred[str(message.guild.id)] = [Starred(message.id, bot_msg.id)]
 
         # Save starred message to a json file
-        cur[str(message.guild.id)]["pins"] = [(star.id, star.bot_message_id) for star in self.starred[str(message.guild.id)]]
+        cur[str(message.guild.id)]["pins"] = [
+            (star.id, star.bot_message_id)
+            for star in self.starred[str(message.guild.id)]
+        ]
         self.save_starboard_config(cur)
 
 
