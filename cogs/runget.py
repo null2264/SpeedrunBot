@@ -23,7 +23,7 @@ class GameList(menus.ListPageSource):
         target = self.ctx.message.guild or self.ctx.author
         e = discord.Embed(
             title="{}'s Watchlist".format(target.name),
-            description="\n".join(" • {}".format(game) for game in games),
+            description="\n".join(" • {}".format(game) for game in games) or "No game being watched.",
             colour=discord.Colour.gold(),
         )
         return e
