@@ -9,6 +9,7 @@ from .utilities.formatting import realtime, pformat
 from dateutil import parser
 from discord.ext import commands, tasks
 
+
 @backoff.on_exception(
     backoff.expo, aiohttp.ClientResponseError, max_tries=3, max_time=60
 )
@@ -28,11 +29,13 @@ async def srcRequest(query):
             _json = await res.json()
             return _json
 
+
 class Game(object):
     __slots__ = ("id", "name")
     def __init__(self, data):
         self.id = data["id"]
         self.name = data["names"]["international"]
+
 
 class srcGame(commands.Converter):
     async def convert(self, ctx, argument):
@@ -42,6 +45,7 @@ class srcGame(commands.Converter):
         except KeyError:
             gameData = await srcRequest("/games?name={}".format(argument))
             return Game(gameData["data"])
+
 
 class RunGet(commands.Cog):
     def __init__(self, bot):
@@ -101,10 +105,11 @@ class RunGet(commands.Cog):
         self.gameIds = {}
         async with self.db.execute("SELECT * FROM guilds") as curr:
             async for row in curr:
+                rowDict = {row[1]: row[2]}
                 try:
-                    self.gameIds[row[0]].update({row[1]: row[2]})
+                    self.gameIds[row[0]].update(rowDict)
                 except KeyError:
-                    self.gameIds[row[0]] = {row[1]: row[2]}
+                    self.gameIds[row[0]] = rowDict
 
         self.src_update.start()
 
@@ -279,7 +284,6 @@ class RunGet(commands.Cog):
         print("Getting runs...")
         await self.bot.wait_until_ready()
 
-
     @commands.command()
     async def watchgame(self, ctx, game: srcGame, channel: discord.TextChannel = None):
         """Add a game to watchlist."""
@@ -293,7 +297,7 @@ class RunGet(commands.Cog):
         try:
             if targetId in self.gameIds[game.id]:
                 if not isDM and channel.id != self.gameIds[game.id][targetId]:
-                    # TODO: Make ability to replace channel id, use prompt (yes/no)
+                    # TODO: Add ability to replace channel id, use prompt (yes/no)
                     return await ctx.reply("Already watching this game!")
                 return await ctx.reply("Already watching this game!")
             raise KeyError
@@ -306,16 +310,36 @@ class RunGet(commands.Cog):
                 )
             )
             await self.db.commit()
+            targetDict = {targetId: None if isDM else channel.id}
             try:
-                self.gameIds[game.id].update({targetId: None if isDM else channel.id})
+                self.gameIds[game.id].update(targetDict)
             except KeyError:
-                self.gameIds[game.id] = {targetId: None if isDM else channel.id}
+                self.gameIds[game.id] = targetDict
             return await ctx.reply("{} has been added to watchlist".format(game.name))
 
     @commands.command()
-    async def unwatchgame(self, ctx, gameId: str = None):
+    async def unwatchgame(self, ctx, game: srcGame):
         """Remove a game from watchlist."""
-        await ctx.reply("Not yet implemented")
+        isDM = ctx.message.guild is None
+
+        # target id = user id for DM or guild id
+        targetId = ctx.author.id if isDM else ctx.message.guild.id
+        
+        try:
+            if targetId not in self.gameIds[game.id]:
+                raise KeyError
+        except KeyError:
+            return await ctx.reply("{} is not in the watchlist!".format(game.name))
+
+        await self.db.execute(
+            "DELETE FROM guilds WHERE game_id = ? AND guild_id = ?", (
+                game.id, 
+                targetId,
+            )
+        )
+        await self.db.commit()
+        self.gameIds[game.id].pop(targetId)
+        return await ctx.reply("{} has been removed from watchlist".format(game.name))
 
 
 def setup(bot):
