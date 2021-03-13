@@ -93,8 +93,7 @@ class RunGet(commands.Cog):
         # Try get sent_runs from database
         try:
             async with self.db.execute("SELECT * FROM sent_runs") as curr:
-                rows = await curr.fetchall()
-                self.sent_runs = [row[0] for row in rows]
+                self.sent_runs = [row[0] async for row in curr]
         except Exception as exc:
             print("Something went wrong!", exc)
             self.sent_runs = []
