@@ -283,7 +283,6 @@ class RunGet(commands.Cog):
     @commands.command()
     async def watchgame(self, ctx, game: srcGame, channel: discord.TextChannel = None):
         """Add a game to watchlist."""
-        # TODO: Make converter to get gameId from game name/url
         isDM = ctx.message.guild is None
 
         if not isDM and not channel:
