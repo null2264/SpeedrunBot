@@ -32,6 +32,7 @@ async def srcRequest(query):
 
 class Game(object):
     __slots__ = ("id", "name")
+
     def __init__(self, data):
         self.id = data["id"]
         self.name = data["names"]["international"]
@@ -87,6 +88,7 @@ class RunGet(commands.Cog):
             CREATE TABLE IF NOT EXISTS guilds
             (
                 game_id TEXT,
+                game_name TEXT,
                 guild_id INTEGER,
                 channel_id INTEGER
             )
@@ -105,7 +107,7 @@ class RunGet(commands.Cog):
         self.gameIds = {}
         async with self.db.execute("SELECT * FROM guilds") as curr:
             async for row in curr:
-                rowDict = {row[1]: row[2]}
+                rowDict = {"name": row[1], row[2]: row[3]}
                 try:
                     self.gameIds[row[0]].update(rowDict)
                 except KeyError:
@@ -194,11 +196,7 @@ class RunGet(commands.Cog):
                 categoryID = catData["id"]
                 if catData["type"] == "per-level":
                     levelID = levData["id"]
-                    categoryName = (
-                        levData["name"]
-                        + ": "
-                        + catData["name"]
-                    )
+                    categoryName = levData["name"] + ": " + catData["name"]
                     leaderboard = await self.getLeaderboard(
                         run["game"]["data"]["id"], categoryID, levelID, subcategoryQuery
                     )
@@ -208,9 +206,7 @@ class RunGet(commands.Cog):
                             rank = r["place"]
                 else:
                     categoryName = catData["name"]
-                    categoryName = (
-                        catData["name"]
-                    )
+                    categoryName = catData["name"]
                     leaderboard = await self.getLeaderboard(
                         gameId=run["game"]["data"]["id"],
                         categoryId=categoryID,
@@ -248,7 +244,10 @@ class RunGet(commands.Cog):
                 a.set_thumbnail(url=cover)
 
                 await self.addRun(runId)
-                channels = [ch if ch else user for user, ch in self.gameIds[run["game"]["data"]["id"]].items()]
+                channels = [
+                    ch if ch else user
+                    for user, ch in self.gameIds[run["game"]["data"]["id"]].items()
+                ]
                 for target in channels:
                     target = self.bot.get_channel(target) or self.bot.get_user(target)
                     await target.send(embed=a)
@@ -274,9 +273,7 @@ class RunGet(commands.Cog):
             )
 
         # Get and send recently verified runs
-        futures = [
-            self.getRecentlyVerified(offset) for offset in range(0, 2000, 200)
-        ]
+        futures = [self.getRecentlyVerified(offset) for offset in range(0, 2000, 200)]
         await asyncio.gather(*futures)
 
     @src_update.before_loop
@@ -303,14 +300,11 @@ class RunGet(commands.Cog):
             raise KeyError
         except KeyError:
             await self.db.execute(
-                "INSERT INTO guilds VALUES (?, ?, ?)", (
-                    game.id, 
-                    targetId,
-                    None if isDM else channel.id
-                )
+                "INSERT INTO guilds VALUES (?, ?, ?, ?)",
+                (game.id, game.name, targetId, None if isDM else channel.id),
             )
             await self.db.commit()
-            targetDict = {targetId: None if isDM else channel.id}
+            targetDict = {"name": game.name, targetId: None if isDM else channel.id}
             try:
                 self.gameIds[game.id].update(targetDict)
             except KeyError:
@@ -324,7 +318,7 @@ class RunGet(commands.Cog):
 
         # target id = user id for DM or guild id
         targetId = ctx.author.id if isDM else ctx.message.guild.id
-        
+
         try:
             if targetId not in self.gameIds[game.id]:
                 raise KeyError
@@ -332,14 +326,29 @@ class RunGet(commands.Cog):
             return await ctx.reply("{} is not in the watchlist!".format(game.name))
 
         await self.db.execute(
-            "DELETE FROM guilds WHERE game_id = ? AND guild_id = ?", (
-                game.id, 
+            "DELETE FROM guilds WHERE game_id = ? AND guild_id = ?",
+            (
+                game.id,
                 targetId,
-            )
+            ),
         )
         await self.db.commit()
         self.gameIds[game.id].pop(targetId)
         return await ctx.reply("{} has been removed from watchlist".format(game.name))
+
+    @commands.command()
+    async def gamelist(self, ctx):
+        """Get game watchlist"""
+        isDM = ctx.message.guild is None
+
+        # target id = user id for DM or guild id
+        targetId = ctx.author.id if isDM else ctx.message.guild.id
+
+        guildGames = [
+            game["name"] for game in self.gameIds.values() if targetId in game
+        ]
+
+        await ctx.send("\n".join(guildGames) or "No game being watched")
 
 
 def setup(bot):
