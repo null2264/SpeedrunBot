@@ -94,6 +94,14 @@ class RunGet(commands.Cog):
         self.session = self.bot.session
         self.db = self.bot.db
 
+    def ownerOrPerms(**perms):
+        original = commands.has_permissions(**perms).predicate
+        async def check(ctx):
+            if not ctx.guild:
+                return True
+            return ctx.guild.owner_id == ctx.author.id or await original(ctx)
+        return commands.check(check)
+
     async def asyncInit(self):
         """`__init__` but async"""
         # Create `sent_runs` table if its not exists
@@ -306,7 +314,7 @@ class RunGet(commands.Cog):
         await self.bot.wait_until_ready()
 
     @commands.command(aliases=["addgame"])
-    @commands.has_permissions(manage_guild=True)
+    @ownerOrPerms(manage_guild=True)
     async def watchgame(self, ctx, game: srcGame, channel: discord.TextChannel = None):
         """Add a game to watchlist."""
         isDM = ctx.message.guild is None
@@ -353,7 +361,7 @@ class RunGet(commands.Cog):
             return await ctx.reply(embed=e)
 
     @commands.command(aliases=["deletegame"])
-    @commands.has_permissions(manage_guild=True)
+    @ownerOrPerms(manage_guild=True)
     async def unwatchgame(self, ctx, game: srcGame):
         """Remove a game from watchlist."""
         isDM = ctx.message.guild is None
