@@ -15,7 +15,7 @@ class GameList(menus.ListPageSource):
     def __init__(self, ctx, data):
         self.ctx = ctx
         super().__init__(
-            data,
+            sorted(data),
             per_page=10,
         )
 
