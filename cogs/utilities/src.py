@@ -7,7 +7,7 @@ import re
 from discord.ext import commands
 
 
-srcRegex = re.compile(r"https?:\/\/(?:www\.)?speedrun\.com\/(\w*)(?:\/|\#)?")
+srcRegex = re.compile(r"https?:\/\/(?:www\.)?speedrun\.com\/(\w*)(?:\/.*|\#.*)?")
 
 
 @backoff.on_exception(
