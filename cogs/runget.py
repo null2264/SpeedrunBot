@@ -253,14 +253,14 @@ class RunGet(commands.Cog):
         print("Getting runs...")
         await self.bot.wait_until_ready()
 
-    @commands.command(aliases=["addgame"])
+    @commands.command(aliases=["addgame"], usage="<game id|name|url> [#channel]")
     @ownerOrPerms(manage_guild=True)
     async def watchgame(self, ctx, game: srcGame, channel: discord.TextChannel = None):
         """Add a game to watchlist."""
         isDM = ctx.message.guild is None
 
         if not isDM and not channel:
-            return await ctx.reply("Usage: mm!watchgame <game id> [#channel]")
+            return await ctx.reply("Usage: mm!watchgame <game id|name|url> [#channel]")
 
         # target id = user id for DM or guild id
         targetId = ctx.author.id if isDM else ctx.message.guild.id
@@ -300,7 +300,7 @@ class RunGet(commands.Cog):
             e.set_thumbnail(url=game.cover)
             return await ctx.reply(embed=e)
 
-    @commands.command(aliases=["deletegame"])
+    @commands.command(aliases=["deletegame"], usage="<game id|name|url>")
     @ownerOrPerms(manage_guild=True)
     async def unwatchgame(self, ctx, game: srcGame):
         """Remove a game from watchlist."""

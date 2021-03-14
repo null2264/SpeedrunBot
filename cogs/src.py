@@ -438,7 +438,7 @@ class SRC(commands.Cog):
                 return game
 
     @commands.command(
-        usage="<game> [category|individual level(category)] [subcategories...]",
+        usage="<game id|name|url> [category|individual level(category)] [subcategories...]",
         aliases=["lb"],
     )
     async def leaderboard(
@@ -484,7 +484,7 @@ class SRC(commands.Cog):
         async with self.session.get(url) as res:
             return json.loads(await res.text())
 
-    @commands.command(aliases=["uv"])
+    @commands.command(aliases=["uv"], usage="<game id|name|url>")
     async def unverified(self, ctx, *, game: srcGame):
         """Get game's pending runs count."""
         e = discord.Embed(
@@ -542,7 +542,7 @@ class SRC(commands.Cog):
             )
         await self.initMsg.edit(embed=e)
 
-    @commands.command()
+    @commands.command(usage="<game id|name|url>")
     async def categories(self, ctx, game: srcGame):
         """Get categories of a game"""
         e = discord.Embed(
@@ -571,7 +571,7 @@ class SRC(commands.Cog):
                 subcategoryName += [foundVar[0]["values"]["values"][var[1]]["label"]]
         return subcategoryName
 
-    @commands.command()
+    @commands.command(usage="<#channel> <game id|name|url>")
     @commands.has_permissions(manage_messages=True)
     async def pending(self, ctx, channel: discord.TextChannel, game: srcGame):
         """Send pending runs to a channel"""
