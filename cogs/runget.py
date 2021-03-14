@@ -257,6 +257,7 @@ class RunGet(commands.Cog):
     @ownerOrPerms(manage_guild=True)
     async def watchgame(self, ctx, game: srcGame, channel: discord.TextChannel = None):
         """Add a game to watchlist."""
+        # TODO: Add ability to add multiple games
         isDM = ctx.message.guild is None
 
         if not isDM and not channel:
