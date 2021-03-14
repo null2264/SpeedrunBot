@@ -1,9 +1,13 @@
 import aiohttp
 import backoff
 import discord
+import re
 
 
 from discord.ext import commands
+
+
+srcRegex = re.compile(r"https?:\/\/(?:www\.)?speedrun\.com\/(\w*)(?:\/|\#)?")
 
 
 @backoff.on_exception(
@@ -42,8 +46,18 @@ class Game(object):
         return self.name
 
 
+class GameNotFound(commands.BadArgument):
+    def __init__(self, argument):
+        super().__init__(message='Game "{}" not Found'.format(argument))
+
+
 class srcGame(commands.Converter):
     async def convert(self, ctx, argument):
+        # Get abbreviation from url
+        match = srcRegex.fullmatch(argument)
+        if match:
+            argument = match.group(1)
+
         try:
             gameData = await srcRequest("/games/{}".format(argument))
         except KeyError:
@@ -52,4 +66,4 @@ class srcGame(commands.Converter):
             try:
                 return Game(gameData["data"])
             except KeyError:
-                raise commands.BadArgument('Game "{}" not Found'.format(argument))
+                raise GameNotFound(argument)

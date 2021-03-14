@@ -5,6 +5,7 @@ import sys
 import traceback
 
 
+from .utilities.src import GameNotFound
 from discord.ext import commands
 
 
@@ -32,14 +33,20 @@ class ErrorHandler(commands.Cog):
 
         if isinstance(error, commands.CommandNotFound):
             return
+        
+        if isinstance(error, GameNotFound):
+            e = discord.Embed(
+                title=str(error),
+                colour=discord.Colour.red()
+            )
+            return await ctx.reply(embed=e)
 
         if isinstance(error, commands.CommandOnCooldown):
             bot_msg = await ctx.send(
                 f"{ctx.author.mention}, you have to wait {round(error.retry_after, 2)} seconds before using this again"
             )
             await asyncio.sleep(round(error.retry_after))
-            await bot_msg.delete()
-            return
+            return await bot_msg.delete()
 
         else:
             print(
