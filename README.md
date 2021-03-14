@@ -10,12 +10,17 @@ Sends recently verified runs for any games (from speedrun.com) that you pick. (A
 
 ![Screenshot 1](assets/screenshot1.png)
 
-### How to
+### Setup
 
 - Be in the same server with the bot
 - Make sure the bot have permission to send messages and embeds
-- Send `mm!addgame <game name/id> [#channel]` ( or `mm!addgame <game name/id>` for DM ). Example: `mm!addgame "Minecraft: Bedrock Edition" #new-runs`
-  - Tips: Use `""` if the game name have spaces
+- Send `mm!addgame <game name|id|url> [#channel]` ( or just `mm!addgame <game name|id|url>` for DM ).  
+  Example:  
+     `mm!addgame "Minecraft: Bedrock Edition" #new-runs`  
+     `mm!addgame mcbe #new-runs`  
+     `mm!addgame https://www.speedrun.com/mcbe #new-runs`  
+  ![Setup Screenshot](assets/screenshot3.png)  
+  **TIPS**: Use `""` if the game name have spaces.
 - Done. It'll automatically send newly verified runs every 1 minutes
 
 ## Other Features
