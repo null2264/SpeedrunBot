@@ -24,7 +24,8 @@ class GameList(menus.ListPageSource):
         target = self.ctx.message.guild or self.ctx.author
         e = discord.Embed(
             title="{}'s Watchlist".format(target.name),
-            description="\n".join(" • {}".format(game) for game in games) or "No game being watched.",
+            description="\n".join(" • {}".format(game) for game in games)
+            or "No game being watched.",
             colour=discord.Colour.gold(),
         )
         return e
@@ -148,7 +149,6 @@ class RunGet(commands.Cog):
             gameName = run["game"]["data"]["names"]["international"]
             cover = run["game"]["data"]["assets"]["cover-large"]["uri"]
             verifyDate = run["status"]["verify-date"]
-            players = []
             rank = "-1 (Bot failed to get run's rank)"
             igt = run["times"]["ingame_t"]
             rta = run["times"]["realtime_t"]
@@ -194,11 +194,12 @@ class RunGet(commands.Cog):
                 if subcategoryName:
                     categoryName += " - " + ", ".join(subcategoryName)
 
-            for player in run["players"]["data"]:
-                if player["rel"] == "guest":
-                    players.append(player["name"])
-                else:
-                    players.append(player["names"]["international"])
+            players = [
+                player["name"]
+                if player["rel"] == "guest"
+                else player["names"]["international"]
+                for player in run["players"]["data"]
+            ]
 
             try:
                 a = discord.Embed(
