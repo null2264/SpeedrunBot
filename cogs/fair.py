@@ -48,7 +48,7 @@ class Fair(commands.Cog):
                         else:
                             fairStreak = 1
                             await message.channel.send(
-                                "streak lost. <:sad:716629485449117708>"
+                                "streak lost. <:sadge:796074093891682345>"
                             )
 
                         # only send && update if user is fairing for the first time today
