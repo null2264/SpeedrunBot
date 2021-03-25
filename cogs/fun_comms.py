@@ -412,7 +412,7 @@ class Fun(commands.Cog):
                 description="Nope, not doing that",
             )
 
-            await ctx.send(embed=a)
+            return await ctx.send(embed=a)
 
         if member.id in roast_him_bad:
             a = discord.Embed(
@@ -420,15 +420,14 @@ class Fun(commands.Cog):
                 description="<@807002219287019561> Are you javascript? You're so fucking messy, im a python",
             )
 
-            await ctx.send(embed=a)
+            return await ctx.send(embed=a)
 
-        else:
-            e = discord.Embed(
-                colour=discord.Color(0xE41919),
-                description=f"{member.mention} {choice(roast)}",
-            )
+        e = discord.Embed(
+            colour=discord.Color(0xE41919),
+            description=f"{member.mention} {choice(roast)}",
+        )
 
-            await ctx.send(embed=e)
+        await ctx.send(embed=e)
 
     @commands.cooldown(1, 60, commands.BucketType.guild)
     @commands.command()
