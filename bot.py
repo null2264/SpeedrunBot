@@ -24,7 +24,7 @@ class MangoManBot(commands.Bot):
 
         self.session = aiohttp.ClientSession()
 
-        self.master = [186713080841895936, 564610598248120320]
+        self.master = (186713080841895936, 564610598248120320)
 
         self.loop.create_task(self.asyncInit())
     
