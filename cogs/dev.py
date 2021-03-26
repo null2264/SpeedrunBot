@@ -56,16 +56,19 @@ class TextWrapPageSource(menus.ListPageSource):
 
 class CodeBlock(object):
     __slots__ = ("language", "code")
+
     def __init__(self, language, code):
         self.language = "".join(language) or "sh"
         self.code = "".join(code) or "echo ''"
 
+
 class codeBlockConverter(commands.Converter):
     """Get command out of codeblock."""
+
     async def convert(self, ctx, argument: str):
         if not argument.startswith("`"):
             return CodeBlock("sh", argument)
-        
+
         backticks = 0
         inLanguage = False
         inCode = False
@@ -135,14 +138,23 @@ class Developer(commands.Cog):
             text = line.replace("\r", "").strip("\n")
             return re.sub(r"\x1b[^m]*m", "", text).replace("``", "`\u200b`").strip("\n")
 
-        content = clean_bytes(proc.stdout + ("{}: command not found: {}".format(SHELL, command.code) if proc.stderr else ""))
+        content = clean_bytes(
+            proc.stdout
+            + (
+                "{}: command not found: {}".format(SHELL, command.code)
+                if proc.stderr
+                else ""
+            )
+        )
         menus = MMMenu(TextWrapPageSource("```", command.language, content))
         return await menus.start(ctx)
 
     @commands.command()
     async def pull(self, ctx):
         """Update the bot from github."""
-        await ctx.invoke(self.bot.get_command("sh"), command=CodeBlock("sh", "git pull"))
+        await ctx.invoke(
+            self.bot.get_command("sh"), command=CodeBlock("sh", "git pull")
+        )
 
 
 def setup(bot):
