@@ -119,7 +119,7 @@ class Developer(commands.Cog):
         if WINDOWS:
             return await ctx.reply("Unfortunately, Windows is not supported.")
         else:
-            sequence = [SHELL, "-c", '"{}"'.format(command.code)]
+            sequence = ["timeout 5m", SHELL, "-c", '"{}"'.format(command.code)]
 
         async def run(shell_command):
             p = await asyncio.create_subprocess_shell(
