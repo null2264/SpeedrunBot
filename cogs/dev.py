@@ -119,17 +119,22 @@ class Developer(commands.Cog):
         if WINDOWS:
             return await ctx.reply("Unfortunately, Windows is not supported.")
         else:
-            sequence = ["timeout 5s", SHELL, "-c", '"{}"'.format(command.code)]
+            sequence = (SHELL, "-c", str(command.code))
 
         async def run(shell_command):
-            p = await asyncio.create_subprocess_shell(
-                shell_command, stdin=PIPE, stdout=PIPE, stderr=STDOUT
+            p = await asyncio.create_subprocess_exec(
+                *shell_command, stdout=PIPE, stderr=STDOUT
             )
             stdout, stderr = await p.communicate()
             code = p.returncode
             return ShellResult(code, stdout, stderr)
 
-        proc = await run(" ".join(sequence))
+        # TODO: Make shell command not stuck
+        # try:
+        #     proc = await asyncio.wait_for(run(sequence), timeout=5)
+        # except asyncio.TimeoutError:
+        #     proc = None
+        proc = await run(sequence)
 
         def clean_bytes(line):
             """
@@ -138,14 +143,7 @@ class Developer(commands.Cog):
             text = line.replace("\r", "").strip("\n")
             return re.sub(r"\x1b[^m]*m", "", text).replace("``", "`\u200b`").strip("\n")
 
-        content = clean_bytes(
-            proc.stdout
-            + (
-                "{}: command not found: {}".format(SHELL, command.code)
-                if proc.stderr
-                else ""
-            )
-        )
+        content = clean_bytes(proc.stdout if proc else "{}: timeout!".format(SHELL))
         menus = MMMenu(TextWrapPageSource("```", command.language, content))
         return await menus.start(ctx)
 
