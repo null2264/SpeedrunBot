@@ -116,7 +116,7 @@ class Developer(commands.Cog):
         if WINDOWS:
             return await ctx.reply("Unfortunately, Windows is not supported.")
         else:
-            sequence = [SHELL, "-c", command.code]
+            sequence = [SHELL, "-c", '"{}"'.format(command.code)]
 
         async def run(shell_command):
             p = await asyncio.create_subprocess_shell(
@@ -126,6 +126,7 @@ class Developer(commands.Cog):
             code = p.returncode
             return ShellResult(code, stdout, stderr)
 
+        print(sequence)
         proc = await run(" ".join(sequence))
 
         def clean_bytes(line):
@@ -142,7 +143,7 @@ class Developer(commands.Cog):
     @commands.command()
     async def pull(self, ctx):
         """Update the bot from github."""
-        await ctx.invoke(self.bot.get_command("sh"), command="git pull")
+        await ctx.invoke(self.bot.get_command("sh"), command=CodeBlock("sh", "git pull"))
 
 
 def setup(bot):
