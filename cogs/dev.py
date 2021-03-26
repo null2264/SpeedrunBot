@@ -126,7 +126,6 @@ class Developer(commands.Cog):
             code = p.returncode
             return ShellResult(code, stdout, stderr)
 
-        print(sequence)
         proc = await run(" ".join(sequence))
 
         def clean_bytes(line):
