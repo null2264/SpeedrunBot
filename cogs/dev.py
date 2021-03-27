@@ -117,7 +117,12 @@ class Developer(commands.Cog):
             return await ctx.reply("Command {} is not allowed!".format(command.code))
 
         if WINDOWS:
-            return await ctx.reply("Unfortunately, Windows is not supported.")
+            # UNTESTED (I don't use Windows, if you tried it let me know if it works)
+            try:
+                open(r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe")
+                sequence = ("powershell", str(command.code))
+            except IOError:
+                sequence = ("cmd", "/c", str(command.code))
         else:
             sequence = (SHELL, "-c", str(command.code))
 

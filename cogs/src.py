@@ -495,6 +495,21 @@ class SRC(commands.Cog):
             )
             return await pages.start(ctx)
 
+    @leaderboard.error
+    async def leaderboard_error(self, ctx, error):
+        error = getattr(error, "original", error)
+        if isinstance(error, srcError.DataNotFound):
+            e = discord.Embed(
+                title="<:error:783265883228340245> 404 - No data found",
+                colour=discord.Colour.red(),
+            )
+        else:
+            e = discord.Embed(
+                title="<:error:783265883228340245> Failed to get data from speedrun.com",
+                colour=discord.Colour.red(),
+            )
+        await self.initMsg.edit(embed=e)
+
     async def get(self, url):
         async with self.session.get(url) as res:
             return json.loads(await res.text())
@@ -541,21 +556,6 @@ class SRC(commands.Cog):
             url=game["assets"]["cover-large"]["uri"],
         )
         await msg.edit(embed=e)
-
-    @leaderboard.error
-    async def leaderboard_error(self, ctx, error):
-        error = getattr(error, "original", error)
-        if isinstance(error, srcError.DataNotFound):
-            e = discord.Embed(
-                title="<:error:783265883228340245> 404 - No data found",
-                colour=discord.Colour.red(),
-            )
-        else:
-            e = discord.Embed(
-                title="<:error:783265883228340245> Failed to get data from speedrun.com",
-                colour=discord.Colour.red(),
-            )
-        await self.initMsg.edit(embed=e)
 
     @commands.command(usage="<game id|name|url>")
     async def categories(self, ctx, game: srcGame):
