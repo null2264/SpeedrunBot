@@ -1,3 +1,4 @@
+import asyncio
 import aiohttp
 import discord
 import json
@@ -6,7 +7,7 @@ import re
 
 from .utilities.formatting import realtime, pformat
 from .utilities.paginator import MMMenu, MMReplyMenu
-from .utilities.src import srcGame, srcRequest
+from .utilities.src import srcGame, srcRequest, srcUser, UserNotFound, GameNotFound
 from dateutil import parser
 from discord.ext import commands, menus
 from speedrunpy import SpeedrunPy, errors as srcError
@@ -122,43 +123,41 @@ class SRC(commands.Cog):
         self.reLevelAndCat = re.compile(r"(.*)\((.*)\)")
         self.baseUrl = "https://www.speedrun.com/api/v1"
 
+    async def getVerified(self, user, game, offset):
+        userID = user.id
+        userName = user.name
+
+        params = {"examiner": userID, "page": 0, "perPage": 200}
+        if game:
+            # Get game id if game is specified
+            params["game"] = game.id
+
+        async with self.session.get(
+            self.baseUrl
+            + "/runs?examiner={}&offset={}&max=200".format(userID, offset)
+            + ("&game={}".format(game.id) if game else "")
+        ) as runs:
+            runs = await runs.json()
+            return runs["pagination"]["size"]
+
     @commands.command(aliases=["v"])
-    async def verified(self, ctx, user: str, game: str = None):
+    async def verified(self, ctx, user: srcUser, game: srcGame = None):
         """`Get how many run a user have verified.`"""
         e = discord.Embed(
             title="<a:loading:776255339716673566> Loading... (SRC API sucks so its going to take a while)",
             colour=discord.Colour.gold(),
         )
-        msg = await ctx.reply(embed=e)
+        initMsg = await ctx.reply(embed=e)
 
-        # Get user data
-        userData = await self.src.get("/users", "?lookup={}".format(user))
-        if "status" in userData or not userData["data"]:
-            # User not found
-            e = discord.Embed(
-                title="<:error:783265883228340245> 404 - User not found!",
-                colour=discord.Colour.red(),
-            )
-            return await msg.edit(embed=e)
-        userID = userData["data"][0]["id"]
-        userName = userData["data"][0]["names"]["international"]
-
-        params = {"examiner": userID, "page": 0, "perPage": 200}
-        if game:
-            # Get game id if game is specified
-            games = await self.src.get_games(name=game)
-            params["game"] = games[0].id
-
-        # Loop to get verified runs
-        runs = await self.src.get_runs(**params)
-        while runs.hasNextPage is True:
-            params["page"] += 1
-            runs = await self.src.get_runs(**params)
-        runVerified = runs.size + runs.offset
+        # Get verified runs examined by {user}
+        futures = [
+            self.getVerified(user, game, offset) for offset in range(0, 5000, 200)
+        ]
+        runs = await asyncio.gather(*futures)
 
         e = discord.Embed(
-            title="{}".format(userName),
-            description="Runs verified:\n `{}`".format(runVerified),
+            title="User: {}".format(user.name),
+            description="Runs verified:\n `{}`".format(sum(runs)),
             colour=discord.Colour.gold(),
         )
         e.set_author(
@@ -166,9 +165,25 @@ class SRC(commands.Cog):
             icon_url="https://www.speedrun.com/images/1st.png",
         )
         e.set_thumbnail(
-            url="https://www.speedrun.com/themes/user/{}/image.png".format(userName)
+            url="https://www.speedrun.com/themes/user/{}/image.png".format(user.name)
         )
-        await msg.edit(embed=e)
+        await initMsg.edit(embed=e)
+
+    @verified.error
+    async def verifiedError(self, ctx, error):
+        error = getattr(error, "original", error)
+        if isinstance(error, UserNotFound):
+            e = discord.Embed(
+                title="<:error:783265883228340245> 404 - User not found!",
+                colour=discord.Colour.red(),
+            )
+            return await ctx.reply(embed=e)
+        if isinstance(error, GameNotFound):
+            e = discord.Embed(
+                title="<:error:783265883228340245> 404 - Game not found!",
+                colour=discord.Colour.red(),
+            )
+            return await ctx.reply(embed=e)
 
     async def get_user_id(self, username):
         data = await self.src.get("/users/", f"{username}")

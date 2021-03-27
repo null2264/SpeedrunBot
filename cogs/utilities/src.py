@@ -8,6 +8,9 @@ from discord.ext import commands
 
 
 srcRegex = re.compile(r"https?:\/\/(?:www\.)?speedrun\.com\/(\w*)(?:\/.*|\#.*)?")
+srcUserRegex = re.compile(
+    r"https?:\/\/(?:www\.)?speedrun\.com\/user\/(\w*)(?:\/.*|\#.*)?"
+)
 
 
 @backoff.on_exception(
@@ -41,7 +44,7 @@ class Game(object):
 
     def __getitem__(self, item):
         return self.data[item]
-    
+
     def __str__(self):
         return self.name
 
@@ -52,18 +55,64 @@ class GameNotFound(commands.BadArgument):
 
 
 class srcGame(commands.Converter):
+    """Converter for speedrun.com game."""
+
     async def convert(self, ctx, argument):
+        if argument is None:
+            return None
+
         # Get abbreviation from url
         match = srcRegex.fullmatch(argument)
         if match:
             argument = match.group(1)
 
-        try:
-            gameData = await srcRequest("/games/{}".format(argument))
-        except KeyError:
+        gameData = await srcRequest("/games/{}".format(argument))
+        if not gameData:
             gameData = await srcRequest("/games?name={}".format(argument))
-        finally:
-            try:
-                return Game(gameData["data"])
-            except KeyError:
-                raise GameNotFound(argument)
+
+        try:
+            return Game(gameData["data"])
+        except KeyError:
+            raise GameNotFound(argument)
+
+
+class User(object):
+    __slots__ = ("id", "name", "data")
+
+    def __init__(self, data):
+        self.id = data["id"]
+        self.name = data["names"]["international"]
+        self.data = data
+
+    def __getitem__(self, item):
+        return self.data[item]
+
+    def __str__(self):
+        return self.name
+
+
+class UserNotFound(commands.BadArgument):
+    def __init__(self, argument):
+        super().__init__(message='User "{}" not Found'.format(argument))
+
+
+class srcUser(commands.Converter):
+    """Converter for speedrun.com user."""
+
+    async def convert(self, ctx, argument):
+        if argument is None:
+            return None
+
+        # Get abbreviation from url
+        match = srcUserRegex.fullmatch(argument)
+        if match:
+            argument = match.group(1)
+
+        userData = await srcRequest("/users?lookup={}".format(argument))
+
+        try:
+            return User(userData["data"][0])
+        except KeyError:
+            raise UserNotFound(argument)
+        except IndexError:
+            raise UserNotFound(argument)

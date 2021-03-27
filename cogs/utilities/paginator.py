@@ -74,4 +74,3 @@ class MMReplyMenu(MMMenu):
         elif isinstance(value, discord.Embed):
             no_ping.update({"embed": value})
         return no_ping
-

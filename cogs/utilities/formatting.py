@@ -27,6 +27,7 @@ def realtime(time):
         + ((str(ms) + "ms") * (ms != "000"))
     )
 
+
 def joinWithAnd(array: list):
     """Turns ["a", "b", "c", "d"] into `a, b, c, and d`"""
     return ", ".join([str(i) for i in array[:-1]]) + ", and {}".format(str(array[-1]))
