@@ -402,43 +402,33 @@ class SRC(commands.Cog):
             for subcat in subcats:
                 params += ["var-{}={}".format(subcat[0], subcat[1])]
 
-        # if category name specified
-        if name:
-            # if levCatName is specificed, most likely its a ILs
-            if not levCatName:
-                # Get category id
-                for cat in cats:
-                    if pformat(cat.name) == pformat(name) and cat.type == "per-game":
-                        # If category is the same as input, and is full game cat, return link
-                        link = cat.rawData["links"][-1]["uri"]
-                        await getSubCats("categories", cat.id, subcats, params)
+        # if levCatName is specificed, most likely its a ILs
+        if not levCatName:
+            # Get category id
+            for cat in cats:
+                if (
+                    not name or pformat(cat.name) == pformat(name)
+                ) and cat.type == "per-game":
+                    # If category is the same as input, and is full game cat, return link
+                    link = cat.rawData["links"][-1]["uri"]
+                    await getSubCats("categories", cat.id, subcats, params)
+                    return formatLink(link, params)
+        # Get IL id
+        for lev in levels["data"]:
+            if not name or pformat(lev["name"]) == pformat(name):
+                if not levCatName:
+                    # If ILs category name not specified, return the link
+                    link = lev["links"][-1]["uri"]
+                    await getSubCats("levels", lev["id"], subcats, params)
+                    return formatLink(link, params)
+                levCats = await self.src.get(
+                    "/levels/", "{}/categories".format(lev["id"])
+                )
+                for cat in levCats["data"]:
+                    if pformat(cat["name"]) == pformat(levCatName):
+                        link = cat["links"][-1]["uri"]
+                        await getSubCats("categories", cat["id"], subcats, params)
                         return formatLink(link, params)
-            # Get IL id
-            for lev in levels["data"]:
-                if pformat(lev["name"]) == pformat(name):
-                    if not levCatName:
-                        # If ILs category name not specified, return the link
-                        link = lev["links"][-1]["uri"]
-                        await getSubCats("levels", lev["id"], subcats, params)
-                        return formatLink(link, params)
-                    levCats = await self.src.get(
-                        "/levels/", "{}/categories".format(lev["id"])
-                    )
-                    for cat in levCats["data"]:
-                        if pformat(cat["name"]) == pformat(levCatName):
-                            link = cat["links"][-1]["uri"]
-                            await getSubCats("categories", cat["id"], subcats, params)
-                            return formatLink(link, params)
-
-        # if name is None:
-        if cats[0].type == "per-game":
-            link = cats[0].rawData["links"][-1]["uri"]
-            await getSubCats("categories", cats[0].id, subcats, params)
-            return formatLink(link, params)
-        # if ILs:
-        link = levels["data"][0]["links"][-1]["uri"]
-        await getSubCats("levels", levels["data"][0]["id"], subcats, params)
-        return formatLink(link, params)
 
     async def game(self, game: str):
         """Get game data from sr.c"""
