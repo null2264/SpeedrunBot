@@ -365,16 +365,13 @@ class SRC(commands.Cog):
         )
         await ctx.send(embed=a)
 
-    async def subcats(self, _type: str, category: str, queries: list = None):
+    async def subcats(self, subCats: dict, queries: list = None):
         """Get subcategory, from a list."""
         if not queries:
             return []
         queries = [pformat(q) for q in queries]
 
         res = []
-        subCats = await self.src.get(
-            "/{}/".format(_type), "{}/variables".format(category)
-        )
         for data in subCats["data"]:
             if data["is-subcategory"] == False:
                 continue
@@ -390,28 +387,30 @@ class SRC(commands.Cog):
     ):
         """Get category/IL (first in the leaderboard or from category's name)."""
         # TODO: Clean this code up!
-        cats = await self.src.get_categories(game=game)
-        levels = await self.src.get("/games/", "{}/levels".format(game))
+        cats = await srcRequest("/games/{}/categories?embed=variables".format(game))
+        levels = await srcRequest(
+            "/games/{}/levels?embed=categories.variables,variables".format(game)
+        )
         params = ["embed=category,variables,level,game,players"]
 
         def formatLink(link, params: list):
             return link + "?{}".format(params.pop(0)) + "&{}".format("&".join(params))
 
-        async def getSubCats(_type, catId, subcats, params):
-            subcats = await self.subcats(_type, catId, subcats)
+        async def getSubCats(variables, subcats, params):
+            subcats = await self.subcats(variables, subcats)
             for subcat in subcats:
                 params += ["var-{}={}".format(subcat[0], subcat[1])]
 
         # if levCatName is specificed, most likely its a ILs
         if not levCatName:
             # Get category id
-            for cat in cats:
-                if (
-                    not name or pformat(cat.name) == pformat(name)
-                ) and cat.type == "per-game":
+            for cat in cats["data"]:
+                if (not name or pformat(cat["name"]) == pformat(name)) and cat[
+                    "type"
+                ] == "per-game":
                     # If category is the same as input, and is full game cat, return link
-                    link = cat.rawData["links"][-1]["uri"]
-                    await getSubCats("categories", cat.id, subcats, params)
+                    link = cat["links"][-1]["uri"]
+                    await getSubCats(cat["variables"], subcats, params)
                     return formatLink(link, params)
         # Get IL id
         for lev in levels["data"]:
@@ -419,15 +418,13 @@ class SRC(commands.Cog):
                 if not levCatName:
                     # If ILs category name not specified, return the link
                     link = lev["links"][-1]["uri"]
-                    await getSubCats("levels", lev["id"], subcats, params)
+                    await getSubCats(lev["variables"], subcats, params)
                     return formatLink(link, params)
-                levCats = await self.src.get(
-                    "/levels/", "{}/categories".format(lev["id"])
-                )
-                for cat in levCats["data"]:
+                # handle individual level categories
+                for cat in lev["categories"]["data"]:
                     if pformat(cat["name"]) == pformat(levCatName):
                         link = cat["links"][-1]["uri"]
-                        await getSubCats("categories", cat["id"], subcats, params)
+                        await getSubCats(cat["variables"], subcats, params)
                         return formatLink(link, params)
 
     async def game(self, game: str):
@@ -494,6 +491,7 @@ class SRC(commands.Cog):
                 colour=discord.Colour.red(),
             )
         else:
+            print(error)
             e = discord.Embed(
                 title="<:error:783265883228340245> Failed to get data from speedrun.com",
                 colour=discord.Colour.red(),
