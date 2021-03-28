@@ -7,7 +7,14 @@ import re
 
 from .utilities.formatting import realtime, pformat
 from .utilities.paginator import MMMenu, MMReplyMenu
-from .utilities.src import srcGame, srcRequest, srcUser, UserNotFound, GameNotFound
+from .utilities.src import (
+    srcGame,
+    srcGameLb,
+    srcRequest,
+    srcUser,
+    UserNotFound,
+    GameNotFound
+)
 from dateutil import parser
 from discord.ext import commands, menus
 from speedrunpy import SpeedrunPy, errors as srcError
@@ -383,14 +390,12 @@ class SRC(commands.Cog):
         return res
 
     async def catOrLevel(
-        self, game: str, name=None, levCatName=None, subcats: list = []
+        self, game, name=None, levCatName=None, subcats: list = []
     ):
         """Get category/IL (first in the leaderboard or from category's name)."""
         # TODO: Clean this code up!
-        cats = await srcRequest("/games/{}/categories?embed=variables".format(game))
-        levels = await srcRequest(
-            "/games/{}/levels?embed=categories.variables,variables".format(game)
-        )
+        cats = game["categories"]
+        levels = game["levels"]
         params = ["embed=category,variables,level,game,players"]
 
         def formatLink(link, params: list):
@@ -444,7 +449,7 @@ class SRC(commands.Cog):
         aliases=["lb"],
     )
     async def leaderboard(
-        self, ctx, game: srcGame, category: str = None, *subcategories: str
+        self, ctx, game: srcGameLb, category: str = None, *subcategories: str
     ):
         """Get leaderboard of a game. Tips: Use "" for name with spaces"""
 
@@ -462,7 +467,7 @@ class SRC(commands.Cog):
                 level = regex[0]
                 category = regex[1]
 
-        params = {"game": game["id"], "name": category, "subcats": subcategories}
+        params = {"game": game, "name": category, "subcats": subcategories}
 
         if category and level:
             params["name"] = level

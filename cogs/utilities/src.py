@@ -76,6 +76,32 @@ class srcGame(commands.Converter):
             raise GameNotFound(argument)
 
 
+class srcGameLb(commands.Converter):
+    """Converter for speedrun.com game.
+    With embeds that useful for leaderboard command"""
+
+    async def convert(self, ctx, argument):
+        if argument is None:
+            return None
+
+        # Get abbreviation from url
+        match = srcRegex.fullmatch(argument)
+        if match:
+            argument = match.group(1)
+
+        # Embeds that useful for lb command
+        argument += "?embed=categories.variables,levels.variables,levels.categories.variables"
+
+        gameData = await srcRequest("/games/{}".format(argument))
+        if not gameData:
+            gameData = await srcRequest("/games?name={}".format(argument))
+
+        try:
+            return Game(gameData["data"])
+        except KeyError:
+            raise GameNotFound(argument)
+
+
 class User(object):
     __slots__ = ("id", "name", "data")
 
