@@ -149,7 +149,7 @@ class SRC(commands.Cog):
 
     @commands.command(aliases=["v"])
     async def verified(self, ctx, user: srcUser, game: srcGame = None):
-        """`Get how many run a user have verified.`"""
+        """Gets how many runs a user has verified."""
         e = discord.Embed(
             title="<a:loading:776255339716673566> Loading... (SRC API sucks so its going to take a while)",
             colour=discord.Colour.gold(),
@@ -208,7 +208,7 @@ class SRC(commands.Cog):
 
     @commands.command(name="wrcount", aliases=["wrs"])
     async def wrcount(self, ctx, user: str):
-        """`Counts the number of world records a user has.`"""
+        """Counts the number of world records a user has."""
         e = discord.Embed(
             title="<a:loading:776255339716673566> Loading... (SRC API sucks so its going to take a while)",
             colour=discord.Colour.gold(),
@@ -247,7 +247,7 @@ class SRC(commands.Cog):
 
     @commands.group(aliases=["gm"], example=["group"], invoke_without_command=True)
     async def gamemoderatorsof(self, ctx, arg=None):
-        """`Figure out who the Game Moderators of a game are.`"""
+        """Figure out who the Game Moderators of a game are."""
         embed = discord.Embed(
             title="<:error:783265883228340245>  **Error!**",
             description="**Argument (game) not specified. Try using one of these games**",
@@ -451,7 +451,7 @@ class SRC(commands.Cog):
     async def leaderboard(
         self, ctx, game: srcGameLb, category: str = None, *subcategories: str
     ):
-        """Get leaderboard of a game. Tips: Use "" for name with spaces"""
+        """Gets the leaderboard of a game. Tips: Use "" for name with spaces"""
 
         e = discord.Embed(
             title="<a:loading:776255339716673566> Loading...",
@@ -509,7 +509,7 @@ class SRC(commands.Cog):
 
     @commands.command(aliases=["uv"], usage="<game id|name|url>")
     async def unverified(self, ctx, *, game: srcGame):
-        """Get game's pending runs count."""
+        """Get a game's pending runs count."""
         e = discord.Embed(
             title="<a:loading:776255339716673566> Loading... (SRC API sucks so its going to take a while)",
             colour=discord.Colour.gold(),
@@ -552,7 +552,7 @@ class SRC(commands.Cog):
 
     @commands.command(usage="<game id|name|url>")
     async def categories(self, ctx, game: srcGame):
-        """Get categories of a game"""
+        """Get the categories of a game"""
         e = discord.Embed(
             title="<a:loading:776255339716673566> Loading...",
             colour=discord.Colour.gold(),
@@ -582,7 +582,7 @@ class SRC(commands.Cog):
     @commands.command(usage="<#channel> <game id|name|url>")
     @commands.has_permissions(manage_messages=True)
     async def pending(self, ctx, channel: discord.TextChannel, game: srcGame):
-        """Send pending runs to a channel"""
+        """Sends pending runs to a channel"""
         e = discord.Embed(
             title="<a:loading:776255339716673566> Sending pending runs...",
             colour=discord.Colour.gold(),
