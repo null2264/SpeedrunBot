@@ -247,7 +247,7 @@ class SRC(commands.Cog):
 
     @commands.group(aliases=["gm"], example=["group"], invoke_without_command=True)
     async def gamemoderatorsof(self, ctx, arg=None):
-        """`Figure out who is the Game Moderator of a Game`"""
+        """`Figure out who the Game Moderators of a game are.`"""
         embed = discord.Embed(
             title="<:error:783265883228340245>  **Error!**",
             description="**Argument (game) not specified. Try using one of these games**",
