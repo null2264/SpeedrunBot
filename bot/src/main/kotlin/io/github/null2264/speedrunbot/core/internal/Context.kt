@@ -1,4 +1,4 @@
-package io.github.null2264.speedrunbot.core
+package io.github.null2264.speedrunbot.core.internal
 
 import dev.kord.core.behavior.channel.createMessage
 import dev.kord.core.entity.Message

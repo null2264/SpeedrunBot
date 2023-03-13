@@ -10,6 +10,8 @@ version = "0.1"
 
 dependencies {
     implementation("dev.kord:kord-core:0.8.x-SNAPSHOT")
+    implementation("io.insert-koin:koin-core:3.2.0")
+    implementation(kotlin("reflect"))
 }
 
 application {
