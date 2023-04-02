@@ -3,13 +3,14 @@ package io.github.null2264.speedrunbot.core.lib
 import dev.kord.core.entity.User
 
 object Extension {
-    /* Ternary-like if statement
+    /**
+     * Ternary-like if statement
      *
      * Example:
-     *   J/JS/C = statement ? true : false
-     *   K      = (statement) then true ?: false
-     *   K + λ  = (statement) then { some actions } ?: false
-     *   OG K   = if (statement) true else false
+     * - `J/JS/C` = `statement ? true : false`
+     * - `K`      = `(statement) then true ?: false`
+     * - `K + λ`  = `(statement) then { some actions } ?: false`
+     * - `OG K`   = `if (statement) true else false`
      */
     inline infix fun <T> Boolean.then(ifTrue: () -> T): T? = if (this) ifTrue() else null
     inline infix fun <T> Boolean.then(ifTrue: T): T? = (this) then { ifTrue }

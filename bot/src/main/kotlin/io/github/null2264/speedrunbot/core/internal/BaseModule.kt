@@ -25,6 +25,7 @@ abstract class BaseModule(open val bot: BaseBot, val name: String, val descripti
                                 annotation.name.ifEmpty { it.name },
                                 this@BaseModule.name,
                                 it,
+                                annotation.name.ifEmpty { null },
                             )
                         )
                     }
