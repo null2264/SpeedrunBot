@@ -12,7 +12,7 @@ suspend fun main() {
     }
 
     Bot {
-        prefixes("!", "mm!")
+        prefixes("src!", "mm!") // mm! for backwards compatibility
 
         extensions(::DeveloperModule, ::GeneralModule)
     }.start()
