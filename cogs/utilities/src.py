@@ -1,10 +1,10 @@
-import aiohttp
-import backoff
 import re
 
-
+import aiohttp
+import backoff
 from discord.ext import commands
 
+from ...context import MMContext
 
 srcRegex = re.compile(r"https?:\/\/(?:www\.)?speedrun\.com\/(\w*)(?:\/.*|\#.*)?")
 srcUserRegex = re.compile(
@@ -89,7 +89,9 @@ class srcGameLb(commands.Converter):
             argument = match.group(1)
 
         # Embeds that useful for lb command
-        argument += "?embed=categories.variables,levels.variables,levels.categories.variables"
+        argument += (
+            "?embed=categories.variables,levels.variables,levels.categories.variables"
+        )
 
         gameData = await srcRequest("/games/{}".format(argument))
         if not gameData:
@@ -124,7 +126,7 @@ class UserNotFound(commands.BadArgument):
 class srcUser(commands.Converter):
     """Converter for speedrun.com user."""
 
-    async def convert(self, ctx, argument):
+    async def convert(self, ctx: MMContext, argument):
         if argument is None:
             return None
 
@@ -133,11 +135,7 @@ class srcUser(commands.Converter):
         if match:
             argument = match.group(1)
 
-        userData = await srcRequest("/users?lookup={}".format(argument))
-
         try:
-            return User(userData["data"][0])
-        except KeyError:
-            raise UserNotFound(argument)
-        except IndexError:
+            return ctx.bot.src.find_user(argument)
+        except:
             raise UserNotFound(argument)

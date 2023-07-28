@@ -1,14 +1,13 @@
-import aiohttp
-import asqlite
-import discord
 import os
 
-
-from speedrunpy.client import Client
-from discord.ext import commands
-
-
+import aiohttp
+import asqlite
 import config
+import discord
+from discord.ext import commands
+from speedrunpy.client import Client
+
+from .context import MMContext
 
 extensions = []
 for filename in os.listdir("./cogs"):
@@ -25,13 +24,16 @@ class MangoManBot(commands.Bot):
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
                 name=("Over my Mangoes | Prefix mm!"),
-            )
+            ),
         )
 
         self.src = Client()
         self.session = aiohttp.ClientSession()
 
         self.master = (186713080841895936, 564610598248120320)
+
+    async def get_context(self, message, *, cls=MMContext):
+        return await super().get_context(message, cls=cls)
 
     async def setup_hook(self):
         self.db = await asqlite.connect("database.db")
