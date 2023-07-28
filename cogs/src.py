@@ -1,28 +1,28 @@
 from __future__ import annotations
 
 import asyncio
-import aiohttp
-import discord
 import json
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from .utilities.formatting import realtime, pformat
+import aiohttp
+import discord
+from dateutil import parser
+from discord.ext import commands, menus
+from speedrunpy.category import Category
+from speedrunpy.errors import NoDataFound
+from speedrunpy.game import Game
+
+from .utilities.formatting import pformat, realtime
 from .utilities.paginator import MMMenu, MMReplyMenu
 from .utilities.src import (
+    GameNotFound,
+    UserNotFound,
     srcGame,
     srcGameLb,
     srcRequest,
     srcUser,
-    UserNotFound,
-    GameNotFound,
 )
-from dateutil import parser
-from discord.ext import commands, menus
-from speedrunpy.errors import NoDataFound
-from speedrunpy.category import Category
-from speedrunpy.game import Game
-
 
 if TYPE_CHECKING:
     from ..bot import MangoManBot
@@ -55,11 +55,11 @@ class CategoriesPageSource(menus.ListPageSource):
             text="Requested by {}".format(str(self.ctx.author)),
             icon_url=self.ctx.author.avatar.url,
         )
-        vars = category.variables
+        vars = category.variables or []
         for var in vars:
-            if not var["is-subcategory"]:
+            if not var.is_subcategory:
                 continue
-            for val in var["values"]["values"].values():
+            for val in var.values["values"].values():
                 e.add_field(
                     name=val["label"],
                     value=val["rules"] or "No rules specified.",
@@ -139,7 +139,7 @@ class SRC(commands.Cog):
         self.baseUrl = "https://www.speedrun.com/api/v1"
 
     @commands.command(aliases=["v"])
-    async def verified(self, ctx, user: srcUser, game: srcGame = None):
+    async def verified(self, ctx, user: srcUser, game: Optional[srcGame] = None):
         """Gets how many runs a user has verified."""
         e = discord.Embed(
             title="<a:loading:776255339716673566> Loading... (SRC API sucks so its going to take a while)",
@@ -230,9 +230,7 @@ class SRC(commands.Cog):
 
         pb_runs = await srcUser.get_personal_bests()
 
-        fullgame_wr = sum(
-            [1 for pb in pb_runs if pb.place == 1 and not pb.level]
-        )
+        fullgame_wr = sum([1 for pb in pb_runs if pb.place == 1 and not pb.level])
         ils_wr = sum([1 for pb in pb_runs if pb.place == 1 and pb.level])
 
         userName = srcUser.name
