@@ -1,0 +1,50 @@
+[project]
+name = "speedrunbot"
+version = "2.0.0"
+description = "An asynchronous API wrapper for speedun.com v1"
+authors = [
+    { name="null2264", email="palembani@gmail.com" },
+    { name="icky" }
+]
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = [
+    "aiohttp==3.7.4",
+    "backoff==1.10.0",
+    "pytz==2021.1",
+    "uvloop>=0.17.0",
+    "speedrun.py @ git+https://github.com/null2264/speedrun.py",
+    "discord.py==2.3.1",
+    "discord-ext-menus @ git+https://github.com/Rapptz/discord-ext-menus",
+    "python-dateutil==2.8.1",
+    "requests==2.25.1",
+    "scylla-driver>=3.26.2",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.pdm.build]
+excludes = ["./**/.git"]
+package-dir = "src"
+includes = ["src/bot", "src/aiocqlengine"]
+source-includes = ["tests", "CHANGELOG.md", "LICENSE", "README.md"]
+# editables backend doesn't work well with namespace packages
+editable-backend = "path"
+
+[tool.pdm.dev-dependencies]
+lint = [
+    "black>=21.7b0",
+    "isort>=5.9.3"
+]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.black]
+line-length = 120
+target-version = ["py37", "py38", "py39", "py310"]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+lines_after_imports = 2
