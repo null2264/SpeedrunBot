@@ -8,6 +8,7 @@ from discord.ext import commands
 
 from ..core import db
 
+
 if TYPE_CHECKING:
     from ..core.bot import MangoManBot
 
@@ -54,7 +55,6 @@ STAR_COLOUR = 0xFFAC33
 
 
 class Stars(commands.Cog):
-
     def __init__(self, bot):
         self.bot: MangoManBot = bot
 
@@ -94,7 +94,9 @@ class Stars(commands.Cog):
         if not channel_id:
             starboard = await self.get_guild_starboard_config(ctx.guild.id)
             if not starboard:
-                return await ctx.send("Starboard channel is not yet set, please set the channel first!\nE.g. `mm!starboard setup #channel`")
+                return await ctx.send(
+                    "Starboard channel is not yet set, please set the channel first!\nE.g. `mm!starboard setup #channel`"
+                )
             await starboard.async_update(amount=amount)
         else:
             await db.Starboard.async_create(id=channel_id, guild_id=ctx.guild.id, amount=amount)

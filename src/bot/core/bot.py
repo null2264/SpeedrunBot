@@ -1,9 +1,9 @@
 import os
-from typing import Optional, TYPE_CHECKING
-from cassandra.cluster import Session
+from typing import TYPE_CHECKING, Optional
 
 import aiohttp
 import discord
+from cassandra.cluster import Session
 from discord.ext import commands
 from speedrunpy.client import Client
 

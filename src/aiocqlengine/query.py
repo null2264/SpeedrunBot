@@ -1,36 +1,31 @@
 """
 Patch cqlengine, add async functions.
 """
+import time
 from datetime import datetime, timedelta
 from warnings import warn
-import time
 
 import six
+from cassandra.cqlengine import CQLEngineException, columns
 from cassandra.cqlengine.query import (
-    DMLQuery,
-    ModelQuerySet,
-    check_applied,
-    SimpleStatement,
-    conn,
-    ValidationError,
-    EqualsOperator,
     BatchQuery,
+    DMLQuery,
+    EqualsOperator,
+    ModelQuerySet,
+    SimpleStatement,
+    ValidationError,
+    check_applied,
+    conn,
 )
-from cassandra.cqlengine import CQLEngineException
-from cassandra.cqlengine import columns
 from cassandra.cqlengine.statements import (
-    UpdateStatement,
-    DeleteStatement,
     BaseCQLStatement,
+    DeleteStatement,
     InsertStatement,
+    UpdateStatement,
 )
 
 
-async def _execute_statement(model,
-                             statement,
-                             consistency_level,
-                             timeout,
-                             connection=None):
+async def _execute_statement(model, statement, consistency_level, timeout, connection=None):
     """
     Based on cassandra.cqlengine.query._execute_statement
     """
@@ -43,9 +38,7 @@ async def _execute_statement(model,
     if model._partition_key_index:
         key_values = statement.partition_key_values(model._partition_key_index)
         if not any(v is None for v in key_values):
-            parts = model._routing_key_from_values(
-                key_values,
-                conn.get_cluster(connection).protocol_version)
+            parts = model._routing_key_from_values(key_values, conn.get_cluster(connection).protocol_version)
             s.routing_key = parts
             s.keyspace = model._get_keyspace()
     connection = connection or model._get_connection()
@@ -53,11 +46,11 @@ async def _execute_statement(model,
 
 
 async def execute(
-        query,
-        params=None,
-        consistency_level=None,
-        timeout=conn.NOT_SET,
-        connection=None,
+    query,
+    params=None,
+    consistency_level=None,
+    timeout=conn.NOT_SET,
+    connection=None,
 ):
     """
     Based on cassandra.cqlengine.connection.execute
@@ -77,24 +70,18 @@ async def execute(
     elif isinstance(query, str):
         query = SimpleStatement(query, consistency_level=consistency_level)
 
-    result = await _connection.session.execute_future(query,
-                                                      params,
-                                                      timeout=timeout)
+    result = await _connection.session.execute_future(query, params, timeout=timeout)
 
     return result
 
 
 class AioDMLQuery(DMLQuery):
     async def _async_execute(self, statement):
-        connection = (self.instance._get_connection()
-                      if self.instance else self.model._get_connection())
+        connection = self.instance._get_connection() if self.instance else self.model._get_connection()
         if self._batch:
             if self._batch._connection:
-                if (not self._batch._connection_explicit and connection
-                        and connection != self._batch._connection):
-                    raise CQLEngineException(
-                        "BatchQuery queries must be executed "
-                        "on the same connection")
+                if not self._batch._connection_explicit and connection and connection != self._batch._connection:
+                    raise CQLEngineException("BatchQuery queries must be executed " "on the same connection")
             else:
                 # set the BatchQuery connection from the model
                 self._batch._connection = connection
@@ -112,7 +99,7 @@ class AioDMLQuery(DMLQuery):
             return results
 
     async def async_delete(self):
-        """ Deletes one instance """
+        """Deletes one instance"""
         if self.instance is None:
             raise CQLEngineException("DML Query instance attribute is None")
 
@@ -143,9 +130,11 @@ class AioDMLQuery(DMLQuery):
         nulled_fields = set()
         if self.instance._has_counter or self.instance._can_update():
             if self.instance._has_counter:
-                warn("'create' and 'save' actions on Counters are deprecated. "
-                     "A future version will disallow this. Use the 'update' "
-                     "mechanism instead.")
+                warn(
+                    "'create' and 'save' actions on Counters are deprecated. "
+                    "A future version will disallow this. Use the 'update' "
+                    "mechanism instead."
+                )
             return await self.async_update()
         else:
             insert = InsertStatement(
@@ -154,14 +143,11 @@ class AioDMLQuery(DMLQuery):
                 timestamp=self._timestamp,
                 if_not_exists=self._if_not_exists,
             )
-            static_save_only = (False if len(
-                self.instance._clustering_keys) == 0 else True)
+            static_save_only = False if len(self.instance._clustering_keys) == 0 else True
             for name, col in self.instance._clustering_keys.items():
-                static_save_only = static_save_only and col._val_is_null(
-                    getattr(self.instance, name, None))
+                static_save_only = static_save_only and col._val_is_null(getattr(self.instance, name, None))
             for name, col in self.instance._columns.items():
-                if (static_save_only and not col.static
-                        and not col.partition_key):
+                if static_save_only and not col.static and not col.partition_key:
                     continue
                 val = getattr(self.instance, name, None)
                 if col._val_is_null(val):
@@ -192,8 +178,7 @@ class AioDMLQuery(DMLQuery):
         if self.instance is None:
             raise CQLEngineException("DML Query intance attribute is None")
         assert type(self.instance) == self.model
-        null_clustering_key = (False if len(
-            self.instance._clustering_keys) == 0 else True)
+        null_clustering_key = False if len(self.instance._clustering_keys) == 0 else True
         static_changed_only = True
         statement = UpdateStatement(
             self.column_family_name,
@@ -203,15 +188,13 @@ class AioDMLQuery(DMLQuery):
             if_exists=self._if_exists,
         )
         for name, col in self.instance._clustering_keys.items():
-            null_clustering_key = null_clustering_key and col._val_is_null(
-                getattr(self.instance, name, None))
+            null_clustering_key = null_clustering_key and col._val_is_null(getattr(self.instance, name, None))
 
         updated_columns = set()
         # get defined fields and their column names
         for name, col in self.model._columns.items():
             # if clustering key is null, don't include non static columns
-            if (null_clustering_key and not col.static
-                    and not col.partition_key):
+            if null_clustering_key and not col.static and not col.partition_key:
                 continue
             if not col.is_primary_key:
                 val = getattr(self.instance, name, None)
@@ -220,8 +203,7 @@ class AioDMLQuery(DMLQuery):
                 if val is None:
                     continue
 
-                if not val_mgr.changed and not isinstance(
-                        col, columns.Counter):
+                if not val_mgr.changed and not isinstance(col, columns.Counter):
                     continue
 
                 static_changed_only = static_changed_only and col.static
@@ -232,34 +214,30 @@ class AioDMLQuery(DMLQuery):
             for name, col in self.model._primary_keys.items():
                 # only include clustering key if clustering key is not null,
                 # and non static columns are changed to avoid cql error
-                if (null_clustering_key
-                        or static_changed_only) and (not col.partition_key):
+                if (null_clustering_key or static_changed_only) and (not col.partition_key):
                     continue
-                statement.add_where(col, EqualsOperator(),
-                                    getattr(self.instance, name))
+                statement.add_where(col, EqualsOperator(), getattr(self.instance, name))
             await self._async_execute(statement)
 
         if not null_clustering_key:
             # remove conditions on fields that have been updated
-            delete_conditionals = ([
-                condition for condition in self._conditional
-                if condition.field not in updated_columns
-            ] if self._conditional else None)
+            delete_conditionals = (
+                [condition for condition in self._conditional if condition.field not in updated_columns]
+                if self._conditional
+                else None
+            )
             self._delete_null_columns(delete_conditionals)
 
 
 class AioQuerySet(ModelQuerySet):
-
     async def _async_execute_query(self):
         if self._batch:
-            raise CQLEngineException("Only inserts, updates, "
-                                     "and deletes are available in batch mode")
+            raise CQLEngineException("Only inserts, updates, " "and deletes are available in batch mode")
         if self._result_cache is None:
             results = await self._async_execute(self._select_query())
             self._result_generator = (i for i in results)
             self._result_cache = []
-            self._construct_result = self._maybe_inject_deferred(
-                self._get_result_constructor())
+            self._construct_result = self._maybe_inject_deferred(self._get_result_constructor())
 
             # "DISTINCT COUNT()" is not supported in C* < 2.2,
             # so we need to materialize all results to get
@@ -284,11 +262,17 @@ class AioQuerySet(ModelQuerySet):
             return result
 
     async def async_create(self, **kwargs):
-        return (await self.model(**kwargs).batch(self._batch).ttl(
-            self._ttl).consistency(self._consistency).if_not_exists(
-                self._if_not_exists).timestamp(self._timestamp).if_exists(
-                    self._if_exists).using(connection=self._connection
-                                           ).async_save())
+        return (
+            await self.model(**kwargs)
+            .batch(self._batch)
+            .ttl(self._ttl)
+            .consistency(self._consistency)
+            .if_not_exists(self._if_not_exists)
+            .timestamp(self._timestamp)
+            .if_exists(self._if_exists)
+            .using(connection=self._connection)
+            .async_save()
+        )
 
     async def async_first(self):
         await self._async_execute_query()
@@ -345,19 +329,23 @@ class AioQuerySet(ModelQuerySet):
             # check for nonexistant columns
             if col is None:
                 raise ValidationError(
-                    "{0}.{1} has no column named: {2}".format(
-                        self.__module__, self.model.__name__, col_name))
+                    "{0}.{1} has no column named: {2}".format(self.__module__, self.model.__name__, col_name)
+                )
             # check for primary key update attempts
             if col.is_primary_key:
                 raise ValidationError(
-                    "Cannot apply update to primary key '{0}' for {1}.{2}".
-                    format(col_name, self.__module__, self.model.__name__))
+                    "Cannot apply update to primary key '{0}' for {1}.{2}".format(
+                        col_name, self.__module__, self.model.__name__
+                    )
+                )
 
             if col_op == "remove" and isinstance(col, columns.Map):
                 if not isinstance(val, set):
                     raise ValidationError(
-                        "Cannot apply update operation '{0}' on column '{1}' with value '{2}'. A set is required."
-                        .format(col_op, col_name, val))
+                        "Cannot apply update operation '{0}' on column '{1}' with value '{2}'. A set is required.".format(
+                            col_op, col_name, val
+                        )
+                    )
                 val = {v: None for v in val}
             else:
                 # we should not provide default values in this use case.
@@ -374,10 +362,11 @@ class AioQuerySet(ModelQuerySet):
             await self._async_execute(us)
 
         if nulled_columns:
-            delete_conditional = ([
-                condition for condition in self._conditional
-                if condition.field not in updated_columns
-            ] if self._conditional else None)
+            delete_conditional = (
+                [condition for condition in self._conditional if condition.field not in updated_columns]
+                if self._conditional
+                else None
+            )
             ds = DeleteStatement(
                 self.column_family_name,
                 fields=nulled_columns,
@@ -393,8 +382,7 @@ class AioBatchQuery(BatchQuery):
         if self._executed and self.warn_multiple_exec:
             msg = "Batch executed multiple times."
             if self._context_entered:
-                msg += (" If using the batch as a context manager, "
-                        "there is no need to call execute directly.")
+                msg += " If using the batch as a context manager, " "there is no need to call execute directly."
             warn(msg)
         self._executed = True
 
@@ -404,11 +392,8 @@ class AioBatchQuery(BatchQuery):
             self._execute_callbacks()
             return
 
-        opener = ("BEGIN " +
-                  (self.batch_type + " " if self.batch_type else "") +
-                  " BATCH")
+        opener = "BEGIN " + (self.batch_type + " " if self.batch_type else "") + " BATCH"
         if self.timestamp:
-
             if isinstance(self.timestamp, six.integer_types):
                 ts = self.timestamp
             elif isinstance(self.timestamp, (datetime, timedelta)):
@@ -417,8 +402,7 @@ class AioBatchQuery(BatchQuery):
                     ts += datetime.now()  # Apply timedelta
                 ts = int(time.mktime(ts.timetuple()) * 1e6 + ts.microsecond)
             else:
-                raise ValueError("Batch expects a long, a timedelta, "
-                                 "or a datetime")
+                raise ValueError("Batch expects a long, a timedelta, " "or a datetime")
 
             opener += " USING TIMESTAMP {0}".format(ts)
 

@@ -13,8 +13,7 @@ def _asyncio_result(self, async_fut, cassandra_fut, result):
         return
 
     result_set = ResultSet(cassandra_fut, result)
-    self._asyncio_loop.call_soon_threadsafe(async_fut.set_result,
-                                            result_set)
+    self._asyncio_loop.call_soon_threadsafe(async_fut.set_result, result_set)
 
 
 def _asyncio_exception(self, fut, exc):
@@ -27,8 +26,7 @@ async def execute_future(self, *args, **kwargs):
     cassandra_fut = self.execute_async(*args, **kwargs)
     future = asyncio.Future(loop=self._asyncio_loop)
     cassandra_fut.add_callbacks(
-        callback=partial(self._asyncio_result, future, cassandra_fut),
-        errback=partial(self._asyncio_exception, future)
+        callback=partial(self._asyncio_result, future, cassandra_fut), errback=partial(self._asyncio_exception, future)
     )
 
     return await future

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
 from cassandra.cqlengine.models import Model, PolymorphicModelException
-from cassandra.cqlengine.query import conn, ValidationError
+from cassandra.cqlengine.query import ValidationError, conn
 from cassandra.cqlengine.statements import SelectStatement
 from cassandra.query import SimpleStatement
 
@@ -28,8 +29,7 @@ class AioModel(Model):
     async def async_create(cls, **kwargs):
         extra_columns = set(kwargs.keys()) - set(cls._columns.keys())
         if extra_columns:
-            raise ValidationError(
-                "Incorrect columns passed: {0}".format(extra_columns))
+            raise ValidationError("Incorrect columns passed: {0}".format(extra_columns))
         return await cls.objects.async_create(**kwargs)
 
     async def async_delete(self):
@@ -77,11 +77,9 @@ class AioModel(Model):
         # handle polymorphic models
         if self._is_polymorphic:
             if self._is_polymorphic_base:
-                raise PolymorphicModelException(
-                    "cannot save polymorphic base model")
+                raise PolymorphicModelException("cannot save polymorphic base model")
             else:
-                setattr(self, self._discriminator_column_name,
-                        self.__discriminator_value__)
+                setattr(self, self._discriminator_column_name, self.__discriminator_value__)
 
         self.validate()
         await self.__dmlquery__(
@@ -121,28 +119,27 @@ class AioModel(Model):
             # check for nonexistant columns
             if col is None:
                 raise ValidationError(
-                    "{0}.{1} has no column named: {2}".format(
-                        self.__module__, self.__class__.__name__, column_id))
+                    "{0}.{1} has no column named: {2}".format(self.__module__, self.__class__.__name__, column_id)
+                )
 
             # check for primary key update attempts
             if col.is_primary_key:
                 current_value = getattr(self, column_id)
                 if v != current_value:
                     raise ValidationError(
-                        "Cannot apply update to primary key '{0}' for {1}.{2}".
-                            format(column_id, self.__module__,
-                                   self.__class__.__name__))
+                        "Cannot apply update to primary key '{0}' for {1}.{2}".format(
+                            column_id, self.__module__, self.__class__.__name__
+                        )
+                    )
 
             setattr(self, column_id, v)
 
         # handle polymorphic models
         if self._is_polymorphic:
             if self._is_polymorphic_base:
-                raise PolymorphicModelException(
-                    "cannot update polymorphic base model")
+                raise PolymorphicModelException("cannot update polymorphic base model")
             else:
-                setattr(self, self._discriminator_column_name,
-                        self.__discriminator_value__)
+                setattr(self, self._discriminator_column_name, self.__discriminator_value__)
 
         self.validate()
         await self.__dmlquery__(
@@ -164,23 +161,17 @@ class AioModel(Model):
         return self
 
     @classmethod
-    async def async_iterate(cls,
-                            fetch_size: int,
-                            fields: list = None,
-                            limit: int = None):
-        """Iteration by fetch_size
-        """
+    async def async_iterate(cls, fetch_size: int, fields: list = None, limit: int = None):
+        """Iteration by fetch_size"""
         statement = SimpleStatement(
-            str(SelectStatement(
-                cls.column_family_name(), fields=fields, limit=limit)),
-            fetch_size=fetch_size)
+            str(SelectStatement(cls.column_family_name(), fields=fields, limit=limit)), fetch_size=fetch_size
+        )
         connection = conn.get_connection()
 
         paging_state = None
         while True:
             # Execute query
-            result_set = await connection.session.execute_future(
-                statement, paging_state=paging_state)
+            result_set = await connection.session.execute_future(statement, paging_state=paging_state)
             yield [cls(**result) for result in result_set.current_rows]
             paging_state = result_set.paging_state
 

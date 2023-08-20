@@ -227,7 +227,9 @@ class RunGet(commands.Cog):
                 return await ctx.reply(embed=e)
             raise KeyError
         except KeyError:
-            await db.GameSubscribed.async_create(id=game.id, name=game.name, target_id=targetId, channel_id=None if isDM else channel.id)
+            await db.GameSubscribed.async_create(
+                id=game.id, name=game.name, target_id=targetId, channel_id=None if isDM else channel.id
+            )
             targetDict = {
                 "name": game.name,
                 "targets": {targetId: None if isDM else channel.id},

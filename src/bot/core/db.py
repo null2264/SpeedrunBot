@@ -1,13 +1,12 @@
 from __future__ import annotations
+
 import os
 from typing import TYPE_CHECKING
 
 from cassandra.cluster import Cluster
+from cassandra.cqlengine import columns, connection, management
 
 from aiocqlengine.models import AioModel as Model
-from cassandra.cqlengine import columns, connection
-from cassandra.cqlengine import management
-
 from aiocqlengine.session import aiosession_for_cqlengine
 
 
