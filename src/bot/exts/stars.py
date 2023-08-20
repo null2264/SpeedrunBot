@@ -17,34 +17,6 @@ SPOILERS = re.compile(r"\|\|(.+?)\|\|")
 STAR_FORMAT = "⭐ **{stars}** {channel} ID: {msg_id}"
 
 
-class Starred:
-    __slots__ = ("id", "bot_message_id")
-
-    def __init__(self, message_id: int, bot_message_id: int = None):
-        self.id = message_id
-        # Return none for Legacy support
-        self.bot_message_id = bot_message_id
-
-    def __repr__(self):
-        return "<Starred: {}, {}>".format(self.id, self.bot_message_id)
-
-
-class StarboardConfig:
-    __slots__ = ("id", "bot", "channel_id", "amount")
-
-    def __init__(self, guild_id: str, bot, config=None):
-        self.id = guild_id
-        self.bot = bot
-        if config:
-            self.channel_id = config["channel"]
-            self.amount = config["amount"]
-
-    @property
-    def channel(self):
-        ch = self.bot.get_channel(self.channel_id)
-        return ch
-
-
 def is_mod(ctx):
     try:
         return ctx.author.guild_permissions.manage_channels
@@ -126,12 +98,12 @@ class Stars(commands.Cog):
         if not starboard_ch:
             return
 
-        msg_id = payload.message_id
+        msg_id: int = payload.message_id
 
         # get real message id
         try:
             tmp: db.Starred = await db.Starred.objects.filter(bot_message_id=msg_id).allow_filtering().async_get()
-            msg_id = tmp.id
+            msg_id = tmp.id  # type: ignore
         except db.Starred.DoesNotExist:
             pass
 
