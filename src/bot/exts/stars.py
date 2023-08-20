@@ -112,6 +112,7 @@ class Stars(commands.Cog):
 
         await ctx.send(embed=e)
 
+    # TODO: Remove star
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         starboard = await self.get_guild_starboard_config(payload.guild_id)
