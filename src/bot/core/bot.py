@@ -1,7 +1,7 @@
 import os
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+from cassandra.cluster import Session
 
-from cassandra.cqlengine import connection
 import aiohttp
 import discord
 from discord.ext import commands
@@ -19,6 +19,9 @@ for filename in os.listdir("./exts"):
 
 
 class MangoManBot(commands.Bot):
+    if TYPE_CHECKING:
+        db_session: Session
+
     def __init__(self):
         super().__init__(
             command_prefix=["mm!"],
@@ -69,6 +72,7 @@ class MangoManBot(commands.Bot):
             except Exception as e:
                 print(e)
 
+        self.db_session.shutdown()
         await super().close()
         await self.src.close()
         await self.session.close()

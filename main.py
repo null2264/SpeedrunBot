@@ -20,9 +20,7 @@ bot.load_config(config)
 
 async def main():
     async with bot:
-        connection.setup(bot.config.scylla_hosts, bot.config.scylla_keyspace, port=bot.config.scylla_port)
-        db.sync(bot.config)
-
+        bot.db_session = db.create_session(bot.config)
         await bot.run()
 
 

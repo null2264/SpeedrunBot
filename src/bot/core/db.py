@@ -1,9 +1,14 @@
 from __future__ import annotations
+import os
 from typing import TYPE_CHECKING
 
+from cassandra.cluster import Cluster
+
 from aiocqlengine.models import AioModel as Model
-from cassandra.cqlengine import columns
+from cassandra.cqlengine import columns, connection
 from cassandra.cqlengine import management
+
+from aiocqlengine.session import aiosession_for_cqlengine
 
 
 if TYPE_CHECKING:
@@ -49,3 +54,19 @@ def sync(config: Config):
     management.sync_table(Star, keyspaces=config.scylla_keyspace)
     management.sync_table(RunSent, keyspaces=config.scylla_keyspace)
     management.sync_table(GameSubscribed, keyspaces=config.scylla_keyspace)
+
+
+def create_session(config: Config):
+    cluster = Cluster()
+    session = cluster.connect()
+
+    # Create keyspace, if already have keyspace your can skip this
+    os.environ["CQLENG_ALLOW_SCHEMA_MANAGEMENT"] = "true"
+    connection.register_connection("cqlengine", session=session, default=True)
+    sync(config)
+
+    # Wrap cqlengine connection
+    aiosession_for_cqlengine(session)
+    session.set_keyspace(config.scylla_keyspace)
+    connection.set_session(session)
+    return session
