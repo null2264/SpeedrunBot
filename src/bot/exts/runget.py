@@ -200,8 +200,8 @@ class RunGet(commands.Cog):
 
     @src_update.before_loop
     async def before_update(self):
-        print("Getting runs...")
         await self.bot.wait_until_ready()
+        print("Getting runs...")
 
     @commands.command(aliases=["addgame"], usage="<game id|name|url> [#channel]")
     @ownerOrPerms(manage_guild=True)

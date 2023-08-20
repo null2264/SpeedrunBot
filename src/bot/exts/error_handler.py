@@ -51,9 +51,10 @@ class ErrorHandler(commands.Cog):
             await asyncio.sleep(round(error.retry_after))
             return await bot_msg.delete()
 
-        else:
-            print("Ignoring exception in command {}:".format(ctx.command), file=sys.stderr)
-            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+        etype = type(error)
+        trace = error.__traceback__
+        lines = traceback.format_exception(etype, error, trace)
+        print("".join(lines))
 
 
 async def setup(bot):

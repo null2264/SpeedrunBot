@@ -113,11 +113,11 @@ class Stars(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        if str(payload.emoji) != "⭐":
-            return
-
         starboard = await self.get_guild_starboard_config(payload.guild_id)
         if not starboard:
+            return
+
+        if str(payload.emoji) != starboard.emoji:
             return
 
         starboard_ch = self.bot.get_channel(starboard.id)  # type: ignore
@@ -126,14 +126,21 @@ class Stars(commands.Cog):
 
         msg_id = payload.message_id
 
-        async def is_starred():
-            try:
-                await db.Starred.async_get(guild_id=payload.guild_id, id=msg_id, bot_message_id=msg_id)
-                return True
-            except db.Starred.DoesNotExist:
-                return False
+        try:
+            await db.Starred.objects.filter(bot_message_id=msg_id).allow_filtering().async_get()
+            return
+        except db.Starred.DoesNotExist:
+            pass
 
-        if not await is_starred():
+        starred: db.Starred | None
+        try:
+            starred = (
+                await db.Starred.objects.filter(guild_id=payload.guild_id, id=msg_id).allow_filtering().async_get()
+            )
+        except db.Starred.DoesNotExist:
+            starred = None
+
+        if not starred:
             # Get message from cache
             msg = discord.utils.get(self.bot.cached_messages, id=msg_id)
             # If not found, get message from discord
@@ -145,7 +152,8 @@ class Stars(commands.Cog):
                     return  # invalid channel
                 msg = await ch.fetch_message(msg_id)
 
-            count = sum([reaction.count for reaction in msg.reactions if str(reaction) == "⭐"])
+            await db.Star.async_create(user_id=payload.member.id, message_id=msg.id)
+            count = len(await db.Star.objects.filter(message_id=msg_id).allow_filtering().async_all())
             if count >= starboard.amount:
                 await self.star_message(starboard_ch, msg)
 
@@ -189,7 +197,7 @@ class Stars(commands.Cog):
                 )
 
         e.add_field(name="Original", value=f"[Jump!]({message.jump_url})", inline=False)
-        e.set_author(name=message.author, icon_url=message.author.avatar_url)
+        e.set_author(name=message.author, icon_url=message.author.display_avatar.url)
         e.set_footer(text="ID: {}".format(message.id))
         bot_msg = await channel.send(embed=e)
 

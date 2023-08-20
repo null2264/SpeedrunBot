@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
 
 class Starboard(Model):
-    id = columns.BigInt(primary_key=True, partition_key=True)
-    guild_id = columns.BigInt(primary_key=True, partition_key=True)
+    id = columns.BigInt()
+    guild_id = columns.BigInt(primary_key=True)
     amount = columns.Integer(default=3)
     emoji = columns.Text(default="⭐")
 
@@ -57,6 +57,7 @@ class FairStreak(Model):
 
 def sync(config: Config):
     management.create_keyspace_simple(config.scylla_keyspace, 1)
+    management.sync_table(Starboard, keyspaces=[config.scylla_keyspace])
     management.sync_table(Starred, keyspaces=[config.scylla_keyspace])
     management.sync_table(Star, keyspaces=[config.scylla_keyspace])
     management.sync_table(RunSent, keyspaces=[config.scylla_keyspace])
