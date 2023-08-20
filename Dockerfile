@@ -12,7 +12,7 @@ FROM base as builder
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y patch
+RUN apt-get update && apt-get install -y patch git
 RUN pip install -U pip setuptools wheel
 RUN pip install pdm
 RUN python -m venv /venv
