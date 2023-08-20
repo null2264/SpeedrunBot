@@ -9,6 +9,7 @@ from typing import Union
 import discord
 from discord.ext import commands
 
+SPOILERS = re.compile(r"\|\|(.+?)\|\|")
 
 class Starred:
     __slots__ = ("id", "bot_message_id")
@@ -66,7 +67,6 @@ class Stars(commands.Cog):
         except FileNotFoundError:
             with open("starboard_config.json", "w+") as f:
                 json.dump({}, f, indent=4)
-        self.spoilers = re.compile(r"\|\|(.+?)\|\|")
 
     def get_guild_starboard_config(self, guild_id: str):
         try:
@@ -86,24 +86,27 @@ class Stars(commands.Cog):
             return None
 
     def is_url_spoiler(self, text, url):
-        spoilers = self.spoilers.findall(text)
+        spoilers = SPOILERS.findall(text)
         for spoiler in spoilers:
             if url in spoiler:
                 return True
         return False
 
     @commands.group()
-    async def starboard(self, ctx):
+    async def starboard(self, _):
         pass
 
     @starboard.command()
     @commands.check(is_mod)
     async def setup(self, ctx, channel: Union[discord.TextChannel, str] = None, amount: int = 5):
         """`Sets the channel for starboard (Only People with [Administator = True] can use this command)`"""
+        if not channel:
+            return
+
         if not isinstance(channel, str) and channel.guild.id != ctx.guild.id:
             return
 
-        sbConfig = self.get_raw_starboard_config()
+        sbConfig = self.get_raw_starboard_config() or {}
 
         try:
             guildConfig = sbConfig[str(ctx.guild.id)]
@@ -159,7 +162,7 @@ class Stars(commands.Cog):
 
         if not is_starred():
             # Get message from cache
-            msg = discord.utils.get(self.bot.cached_messages, id=msg_id)
+            msg = await discord.utils.get(self.bot.cached_messages, id=msg_id)
             # If not found, get message from discord
             if not msg:
                 ch = self.bot.get_channel(payload.channel_id)
