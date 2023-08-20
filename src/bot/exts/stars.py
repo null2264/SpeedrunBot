@@ -127,9 +127,10 @@ class Stars(commands.Cog):
 
         msg_id = payload.message_id
 
+        # get real message id
         try:
-            await db.Starred.objects.filter(bot_message_id=msg_id).allow_filtering().async_get()
-            return
+            tmp: db.Starred = await db.Starred.objects.filter(bot_message_id=msg_id).allow_filtering().async_get()
+            msg_id = tmp.id
         except db.Starred.DoesNotExist:
             pass
 
