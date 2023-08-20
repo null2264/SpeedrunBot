@@ -1,12 +1,10 @@
 import asyncio
-import json
 
-import aiohttp
-import backoff
 import discord
 from dateutil import parser
 from discord.ext import commands, menus, tasks
 
+from ..core import db
 from .utilities.formatting import pformat, realtime
 from .utilities.paginator import MMReplyMenu
 from .utilities.src import srcGame, srcRequest
@@ -35,7 +33,6 @@ class RunGet(commands.Cog):
         self.bot = bot
 
         self.session = self.bot.session
-        self.db = self.bot.db
         self.bot.loop.create_task(self.asyncInit())
 
     def ownerOrPerms(**perms):
@@ -50,60 +47,36 @@ class RunGet(commands.Cog):
 
     async def asyncInit(self):
         """`__init__` but async"""
-        # Create `sent_runs` table if its not exists
-        await self.db.execute(
-            """
-            CREATE TABLE IF NOT EXISTS sent_runs
-            (
-                run_id TEXT UNIQUE
-            )
-            """
-        )
-        await self.db.commit()
-        await self.db.execute(
-            """
-            CREATE TABLE IF NOT EXISTS guilds
-            (
-                game_id TEXT,
-                game_name TEXT,
-                guild_id INTEGER,
-                channel_id INTEGER
-            )
-            """
-        )
-        await self.db.commit()
-
         # Try get sent_runs from database
         try:
-            rows = await self.db.fetchall("SELECT * FROM sent_runs")
-            self.sent_runs = [row[0] for row in rows]
+            runs = await db.RunSent.async_all()
+            self.sent_runs: list[str] = [run.id for run in runs]
         except Exception as exc:
             print("Something went wrong!", exc)
             self.sent_runs = []
 
         # The new self.games
         self.gameIds = {}
-        rows = await self.db.fetchall("SELECT * FROM guilds")
-        for row in rows:
-            rowDict = {"name": row[1], "targets": {row[2]: row[3]}}
+        games = await db.GameSubscribed.async_all()
+        for game in games:
+            data = {"name": game.name, "targets": {game.target_id: game.channel_id}}
             try:
-                self.gameIds[row[0]]["targets"].update(rowDict["targets"])
+                self.gameIds[game.id]["targets"].update(data["targets"])
             except KeyError:
-                self.gameIds[row[0]] = rowDict
+                self.gameIds[game.id] = data
 
         self.src_update.start()
 
     async def addRun(self, run_id: str):
         """Add run_id to sent_runs variable and sent_runs table"""
-        self.sent_runs += [run_id]
-        await self.db.execute("INSERT OR IGNORE INTO sent_runs VALUES (?)", (run_id,))
-        await self.db.commit()
+        self.sent_runs.append(run_id)
+        await db.RunSent.async_create(id=run_id)
 
     async def removeRun(self, run_id: str):
         """Delete run_id from sent_runs variable and sent_runs table"""
-        self.sent_runs -= [run_id]
-        await self.db.execute("DELETE FROM sent_runs WHERE run_id=?", (run_id,))
-        await self.db.commit()
+        self.sent_runs.remove(run_id)
+        run: db.RunSent = await db.RunSent.get(id=run_id)
+        await run.async_delete()
 
     async def getLeaderboard(self, gameId, categoryId, levelId=None, subcategory: list = []):
         """Get leaderboard info from speedrun.com"""
@@ -254,11 +227,7 @@ class RunGet(commands.Cog):
                 return await ctx.reply(embed=e)
             raise KeyError
         except KeyError:
-            await self.db.execute(
-                "INSERT INTO guilds VALUES (?, ?, ?, ?)",
-                (game.id, game.name, targetId, None if isDM else channel.id),
-            )
-            await self.db.commit()
+            await db.GameSubscribed.async_create(id=game.id, name=game.name, target_id=targetId, channel_id=None if isDM else channel.id)
             targetDict = {
                 "name": game.name,
                 "targets": {targetId: None if isDM else channel.id},
@@ -294,14 +263,8 @@ class RunGet(commands.Cog):
             )
             return await ctx.reply(embed=e)
 
-        await self.db.execute(
-            "DELETE FROM guilds WHERE game_id = ? AND guild_id = ?",
-            (
-                game.id,
-                targetId,
-            ),
-        )
-        await self.db.commit()
+        sub: db.GameSubscribed = await db.GameSubscribed.async_get(id=game.id, target_id=targetId)
+        await sub.async_delete()
         self.gameIds[game.id]["targets"].pop(targetId)
 
         e = discord.Embed(

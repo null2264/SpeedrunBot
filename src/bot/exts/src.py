@@ -19,7 +19,7 @@ from .utilities.src import GameNotFound, UserNotFound, srcGame, srcGameLb, srcUs
 
 
 if TYPE_CHECKING:
-    from ..bot import MangoManBot
+    from ..core.bot import MangoManBot
 
 
 class CategoriesPageSource(menus.ListPageSource):

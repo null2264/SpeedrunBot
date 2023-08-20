@@ -1,14 +1,16 @@
 import sys
 import asyncio
+from cassandra.cqlengine import connection
 from dotenv import load_dotenv
 
 try:
-    import config
+    import config  # type: ignore
 except:
     config = None
 
 
 from src.bot.core.bot import MangoManBot
+from src.bot.core import db
 
 load_dotenv()
 
@@ -18,6 +20,9 @@ bot.load_config(config)
 
 async def main():
     async with bot:
+        connection.setup(bot.config.scylla_hosts, bot.config.scylla_keyspace, port=bot.config.scylla_port)
+        db.sync(bot.config)
+
         await bot.run()
 
 

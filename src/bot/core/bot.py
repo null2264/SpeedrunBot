@@ -1,11 +1,13 @@
 import os
 from typing import Optional
 
+from cassandra.cqlengine import connection
 import aiohttp
 import discord
 from discord.ext import commands
 from speedrunpy.client import Client
 
+from . import db
 from .config import Config
 from .context import MMContext
 
@@ -13,7 +15,7 @@ from .context import MMContext
 extensions = []
 for filename in os.listdir("./exts"):
     if filename.endswith(".py"):
-        extensions.append(f"src.exts.{filename[:-3]}")
+        extensions.append(f"bot.exts.{filename[:-3]}")
 
 
 class MangoManBot(commands.Bot):
@@ -37,7 +39,7 @@ class MangoManBot(commands.Bot):
     @property
     def config(self) -> Config:
         if not self._config:
-            raise RuntimeError("Config is not set!")
+            raise RuntimeError("Config is not yet loaded!")
         return self._config
 
     def load_config(self, config=None):
@@ -54,8 +56,6 @@ class MangoManBot(commands.Bot):
         return await super().get_context(message, cls=cls)
 
     async def setup_hook(self):
-        self.db = await asqlite.connect("database.db")
-
         for extension in extensions:
             await self.load_extension(extension)
 
@@ -70,6 +70,5 @@ class MangoManBot(commands.Bot):
                 print(e)
 
         await super().close()
-        await self.db.close()
         await self.src.close()
         await self.session.close()

@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-import json
-import os
 import re
-import uuid
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import discord
 from discord.ext import commands
+
+from ..core import db
+
+if TYPE_CHECKING:
+    from ..core.bot import MangoManBot
 
 
 SPOILERS = re.compile(r"\|\|(.+?)\|\|")
@@ -48,43 +50,18 @@ def is_mod(ctx):
         return False
 
 
+STAR_COLOUR = 0xFFAC33
+
+
 class Stars(commands.Cog):
-    STAR_COLOUR = 0xFFAC33
 
     def __init__(self, bot):
-        self.bot = bot
-        self.starred = {}
+        self.bot: MangoManBot = bot
 
-        # Getting starred message from starboard_config.json
-        # [TODO] Make it not spaghetti code?
+    async def get_guild_starboard_config(self, guild_id: int) -> db.Starboard | None:
         try:
-            with open("starboard_config.json", "r") as conf:
-                conf = json.load(conf)
-                for guildId, data in conf.items():
-                    try:
-                        self.starred[guildId] = [Starred(star[0], star[1]) for star in data["pins"]]
-                    except TypeError:
-                        # Old starred format (without bot_message_id, remove soon)
-                        self.starred[guildId] = [Starred(star) for star in data["pins"]]
-        except FileNotFoundError:
-            with open("starboard_config.json", "w+") as f:
-                json.dump({}, f, indent=4)
-
-    def get_guild_starboard_config(self, guild_id: str):
-        try:
-            with open("starboard_config.json", "r") as conf:
-                config = json.load(conf)
-                return StarboardConfig(guild_id, self.bot, config[str(guild_id)])
-        except Exception as err:
-            print(err)
-            return None
-
-    def get_raw_starboard_config(self):
-        try:
-            with open("starboard_config.json", "r") as conf:
-                return json.load(conf)
-        except Exception as err:
-            print(err)
+            return await db.Starboard.async_get(guild_id=guild_id)
+        except db.Starboard.DoesNotExist:
             return None
 
     def is_url_spoiler(self, text, url):
@@ -108,33 +85,26 @@ class Stars(commands.Cog):
         if not isinstance(channel, str) and channel.guild.id != ctx.guild.id:
             return
 
-        sbConfig = self.get_raw_starboard_config() or {}
-
-        try:
-            guildConfig = sbConfig[str(ctx.guild.id)]
-        except KeyError:
-            sbConfig[str(ctx.guild.id)] = {}
-            guildConfig = sbConfig[str(ctx.guild.id)]
-
         try:
             amount = int(channel) if isinstance(channel, str) else amount
         except ValueError:
             pass
 
-        guildConfig["channel"] = channel.id if isinstance(channel, discord.TextChannel) else 0
-        guildConfig["amount"] = amount
-        if "pins" not in guildConfig:
-            guildConfig["pins"] = []
-
-        # Save config to a json file
-        self.save_starboard_config(sbConfig)
+        channel_id: int | None = channel.id if isinstance(channel, discord.TextChannel) else None
+        if not channel_id:
+            starboard = await self.get_guild_starboard_config(ctx.guild.id)
+            if not starboard:
+                return await ctx.send("Starboard channel is not yet set, please set the channel first!\nE.g. `mm!starboard setup #channel`")
+            await starboard.async_update(amount=amount)
+        else:
+            await db.Starboard.async_create(id=channel_id, guild_id=ctx.guild.id, amount=amount)
 
         channelMentionOrDisabled = channel.mention if isinstance(channel, discord.TextChannel) else "`DISABLED`"
 
         e = discord.Embed(
             title="Starboard Setup",
             description="Channel: {}\nRequired stars: `{}`".format(channelMentionOrDisabled, amount),
-            colour=discord.Colour(self.STAR_COLOUR),
+            colour=discord.Colour(STAR_COLOUR),
         )
 
         await ctx.send(embed=e)
@@ -144,47 +114,44 @@ class Stars(commands.Cog):
         if str(payload.emoji) != "⭐":
             return
 
-        starboard = self.get_guild_starboard_config(payload.guild_id)
+        starboard = await self.get_guild_starboard_config(payload.guild_id)
         if not starboard:
             return
 
-        if not starboard.channel:
+        starboard_ch = self.bot.get_channel(starboard.id)  # type: ignore
+        if not starboard_ch:
             return
 
         msg_id = payload.message_id
 
-        def is_starred():
-            if str(payload.guild_id) not in self.starred:
+        async def is_starred():
+            try:
+                await db.Starred.async_get(guild_id=payload.guild_id, id=msg_id, bot_message_id=msg_id)
+                return True
+            except db.Starred.DoesNotExist:
                 return False
 
-            for star in self.starred[str(payload.guild_id)]:
-                if msg_id == star.id or msg_id == star.bot_message_id:
-                    return True
-            return False
-
-        if not is_starred():
+        if not await is_starred():
             # Get message from cache
-            msg = await discord.utils.get(self.bot.cached_messages, id=msg_id)
+            msg = discord.utils.get(self.bot.cached_messages, id=msg_id)
             # If not found, get message from discord
             if not msg:
                 ch = self.bot.get_channel(payload.channel_id)
+                if not ch:
+                    return
+                if isinstance(ch, (discord.ForumChannel, discord.CategoryChannel, discord.abc.PrivateChannel)):
+                    return  # invalid channel
                 msg = await ch.fetch_message(msg_id)
+
             count = sum([reaction.count for reaction in msg.reactions if str(reaction) == "⭐"])
             if count >= starboard.amount:
-                await self.star_message(starboard.channel, msg)
-
-    def save_starboard_config(self, data):
-        temp = "{}-{}.tmp".format(uuid.uuid4(), "starboard_config.json")
-        with open(temp, "w") as tmp:
-            json.dump(data.copy(), tmp, indent=4)
-
-        os.replace(temp, "starboard_config.json")
+                await self.star_message(starboard_ch, msg)
 
     async def star_message(self, channel, message):
         e = discord.Embed(
             title="New starred message!",
             description=message.content,
-            colour=discord.Colour(self.STAR_COLOUR),
+            colour=discord.Colour(STAR_COLOUR),
             timestamp=message.created_at,
         )
 
@@ -224,19 +191,7 @@ class Stars(commands.Cog):
         e.set_footer(text="ID: {}".format(message.id))
         bot_msg = await channel.send(embed=e)
 
-        with open("starboard_config.json", "r") as cur:
-            cur = json.load(cur)
-
-        try:
-            self.starred[str(message.guild.id)] += [Starred(message.id, bot_msg.id)]
-        except KeyError:
-            self.starred[str(message.guild.id)] = [Starred(message.id, bot_msg.id)]
-
-        # Save starred message to a json file
-        cur[str(message.guild.id)]["pins"] = [
-            (star.id, star.bot_message_id) for star in self.starred[str(message.guild.id)]
-        ]
-        self.save_starboard_config(cur)
+        await db.Starred.async_create(type=1, id=message.id, guild_id=message.guild.id, bot_message_id=bot_msg.id)
 
 
 async def setup(bot):
