@@ -17,7 +17,7 @@ RUN pip install -U pip setuptools wheel
 RUN pip install pdm
 RUN python -m venv /venv
 
-COPY pyproject.toml pdm.lock uvicorn.patch ./
+COPY pyproject.toml pdm.lock ./
 ADD src/ ./src
 RUN pdm sync --prod --no-editable
 
