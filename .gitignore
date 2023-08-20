@@ -1,6 +1,7 @@
 __pycache__/
 .venv/
 .env
+.pdm-python
 database.db
 fair.json
 starboard_config.json

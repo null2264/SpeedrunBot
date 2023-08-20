@@ -9,7 +9,9 @@ from typing import Union
 import discord
 from discord.ext import commands
 
+
 SPOILERS = re.compile(r"\|\|(.+?)\|\|")
+
 
 class Starred:
     __slots__ = ("id", "bot_message_id")

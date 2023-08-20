@@ -1,5 +1,6 @@
 import sys
 import asyncio
+from dotenv import load_dotenv
 
 try:
     import config
@@ -9,6 +10,7 @@ except:
 
 from src.bot.core.bot import MangoManBot
 
+load_dotenv()
 
 bot = MangoManBot()
 bot.load_config(config)
