@@ -29,6 +29,7 @@ class Starred(Model):
     id = columns.BigInt(primary_key=True, partition_key=True)
     guild_id = columns.BigInt(primary_key=True, partition_key=True)
     bot_message_id = columns.BigInt(primary_key=True, partition_key=True)
+    last_known_stars = columns.Integer()
 
 
 class Star(Model):

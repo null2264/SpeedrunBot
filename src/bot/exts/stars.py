@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 
 SPOILERS = re.compile(r"\|\|(.+?)\|\|")
+STAR_FORMAT = "⭐ **{stars}** {channel} ID: {msg_id}"
 
 
 class Starred:
@@ -140,26 +141,45 @@ class Stars(commands.Cog):
         except db.Starred.DoesNotExist:
             starred = None
 
-        if not starred:
-            # Get message from cache
-            msg = discord.utils.get(self.bot.cached_messages, id=msg_id)
-            # If not found, get message from discord
-            if not msg:
-                ch = self.bot.get_channel(payload.channel_id)
-                if not ch:
-                    return
-                if isinstance(ch, (discord.ForumChannel, discord.CategoryChannel, discord.abc.PrivateChannel)):
-                    return  # invalid channel
-                msg = await ch.fetch_message(msg_id)
+        if starred and starred.type == 0:
+            # Legacy star, can't update star count
+            return
 
-            await db.Star.async_create(user_id=payload.member.id, message_id=msg.id)
-            count = len(await db.Star.objects.filter(message_id=msg_id).allow_filtering().async_all())
-            if count >= starboard.amount:
-                await self.star_message(starboard_ch, msg)
+        # Get message from cache
+        msg = discord.utils.get(self.bot.cached_messages, id=msg_id)
+        # If not found, get message from discord
+        if not msg:
+            ch = self.bot.get_channel(payload.channel_id)
+            if not ch:
+                return
+            if isinstance(ch, (discord.ForumChannel, discord.CategoryChannel, discord.abc.PrivateChannel)):
+                return  # invalid channel
+            msg = await ch.fetch_message(msg_id)
 
-    async def star_message(self, channel, message):
+        await db.Star.async_create(user_id=payload.member.id, message_id=msg.id)
+        count = len(await db.Star.objects.filter(message_id=msg_id).allow_filtering().async_all())
+        if not starred and count >= starboard.amount:
+            await self.star_message(starboard_ch, msg, count)
+        elif starred:
+            await self.update_star(starred, starboard_ch, msg, count)
+
+    async def update_star(self, stored_data: db.Starred, channel, message, count):
+        if count == stored_data.last_known_stars:
+            return
+
+        star_msg = discord.utils.get(self.bot.cached_messages, id=stored_data.bot_message_id)
+        if not star_msg:
+            star_msg = await channel.fetch_message(stored_data.bot_message_id)
+
+        await star_msg.edit(
+            content=STAR_FORMAT.format(stars=count, channel=channel.mention, msg_id=message.id), embeds=star_msg.embeds
+        )
+
+        stored_data.last_known_stars = count
+        await stored_data.async_save()
+
+    async def star_message(self, channel, message, count):
         e = discord.Embed(
-            title="New starred message!",
             description=message.content,
             colour=discord.Colour(STAR_COLOUR),
             timestamp=message.created_at,
@@ -198,10 +218,13 @@ class Stars(commands.Cog):
 
         e.add_field(name="Original", value=f"[Jump!]({message.jump_url})", inline=False)
         e.set_author(name=message.author, icon_url=message.author.display_avatar.url)
-        e.set_footer(text="ID: {}".format(message.id))
-        bot_msg = await channel.send(embed=e)
+        bot_msg = await channel.send(
+            STAR_FORMAT.format(stars=count, channel=channel.mention, msg_id=message.id), embed=e
+        )
 
-        await db.Starred.async_create(type=1, id=message.id, guild_id=message.guild.id, bot_message_id=bot_msg.id)
+        await db.Starred.async_create(
+            type=1, id=message.id, guild_id=message.guild.id, bot_message_id=bot_msg.id, last_known_stars=count
+        )
 
 
 async def setup(bot):
