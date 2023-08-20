@@ -15,14 +15,8 @@ from speedrunpy.game import Game
 
 from .utilities.formatting import pformat, realtime
 from .utilities.paginator import MMMenu, MMReplyMenu
-from .utilities.src import (
-    GameNotFound,
-    UserNotFound,
-    srcGame,
-    srcGameLb,
-    srcRequest,
-    srcUser,
-)
+from .utilities.src import GameNotFound, UserNotFound, srcGame, srcGameLb, srcUser
+
 
 if TYPE_CHECKING:
     from ..bot import MangoManBot
@@ -89,11 +83,7 @@ class LeaderboardPageSource(menus.ListPageSource):
         for value in self.data["values"]:
             for variable in self.data["variables"]["data"]:
                 if variable["id"] == value:
-                    self.varName += [
-                        variable["values"]["values"][self.data["values"][value]][
-                            "label"
-                        ]
-                    ]
+                    self.varName += [variable["values"]["values"][self.data["values"][value]]["label"]]
 
         self.catName = ": ".join(self.catName)
         if self.varName:
@@ -193,9 +183,7 @@ class SRC(commands.Cog):
             name="speedrun.com",
             icon_url="https://www.speedrun.com/images/1st.png",
         )
-        e.set_thumbnail(
-            url="https://www.speedrun.com/themes/user/{}/image.png".format(user.name)
-        )
+        e.set_thumbnail(url="https://www.speedrun.com/themes/user/{}/image.png".format(user.name))
         await initMsg.edit(embed=e)
 
     @verified.error
@@ -246,9 +234,7 @@ class SRC(commands.Cog):
             name="speedrun.com",
             icon_url="https://www.speedrun.com/images/1st.png",
         )
-        e.set_thumbnail(
-            url="https://www.speedrun.com/themes/user/{}/image.png".format(userName)
-        )
+        e.set_thumbnail(url="https://www.speedrun.com/themes/user/{}/image.png".format(userName))
 
         await msg.edit(embed=e)
 
@@ -262,12 +248,8 @@ class SRC(commands.Cog):
         )
         embed.add_field(name="Minecraft (Classic)", value="mcc", inline=True)
         embed.add_field(name="Classicube", value="cc", inline=True)
-        embed.add_field(
-            name="Minecraft: New Nintendo 3DS Edition", value="mc3ds", inline=True
-        )
-        embed.add_field(
-            name="Minecraft: Pocket Edition Lite", value="mclite", inline=True
-        )
+        embed.add_field(name="Minecraft: New Nintendo 3DS Edition", value="mc3ds", inline=True)
+        embed.add_field(name="Minecraft: Pocket Edition Lite", value="mclite", inline=True)
         embed.add_field(name="Minecraft: Education Edition", value="mcee", inline=True)
         embed.add_field(name="Minecraft 4K", value="mc4k", inline=True)
         embed.add_field(name="Minecraft: Pi Edition", value="mcpi", inline=True)
@@ -415,9 +397,7 @@ class SRC(commands.Cog):
         if not levCatName:
             # Get category id
             for cat in cats["data"]:
-                if (not name or pformat(cat["name"]) == pformat(name)) and cat[
-                    "type"
-                ] == "per-game":
+                if (not name or pformat(cat["name"]) == pformat(name)) and cat["type"] == "per-game":
                     # If category is the same as input, and is full game cat, return link
                     link = cat["links"][-1]["uri"]
                     await getSubCats(cat["variables"], subcats, params)
@@ -439,9 +419,7 @@ class SRC(commands.Cog):
 
     async def game(self, game: str):
         """Get game data from sr.c"""
-        async with self.session.get(
-            "{}/games?name={}".format(self.baseUrl, game)
-        ) as res:
+        async with self.session.get("{}/games?name={}".format(self.baseUrl, game)) as res:
             _json = json.loads(await res.text())
             try:
                 return _json["data"][0]
@@ -453,9 +431,7 @@ class SRC(commands.Cog):
         usage="<game id|name|url> [category|individual level(category)] [subcategories...]",
         aliases=["lb"],
     )
-    async def leaderboard(
-        self, ctx, game: srcGameLb, category: str = None, *subcategories: str
-    ):
+    async def leaderboard(self, ctx, game: srcGameLb, category: str = None, *subcategories: str):
         """Gets the leaderboard of a game. Tips: Use "" for name with spaces"""
 
         e = discord.Embed(
@@ -487,9 +463,7 @@ class SRC(commands.Cog):
                 # In case empty lb still happened
                 raise srcError.DataNotFound
 
-            pages = MMReplyMenu(
-                source=LeaderboardPageSource(ctx, lb), init_msg=self.initMsg, ping=True
-            )
+            pages = MMReplyMenu(source=LeaderboardPageSource(ctx, lb), init_msg=self.initMsg, ping=True)
             return await pages.start(ctx)
 
     @leaderboard.error
@@ -608,24 +582,14 @@ class SRC(commands.Cog):
                 levData = run["level"]["data"]
                 catData = run["category"]["data"]
                 if catData:
-                    subcategoryName = self.subcategoryName(
-                        run["values"].items(), catData["variables"]
-                    )
+                    subcategoryName = self.subcategoryName(run["values"].items(), catData["variables"])
                 if catData["type"] == "per-level":
-                    categoryName = (
-                        levData["name"]
-                        + ": "
-                        + catData["name"]
-                        + " - "
-                        + ", ".join(subcategoryName)
-                    )
+                    categoryName = levData["name"] + ": " + catData["name"] + " - " + ", ".join(subcategoryName)
                 else:
                     categoryName = catData["name"]
 
                 players = [
-                    player["names"]["international"]
-                    if player["rel"] == "user"
-                    else player["name"]
+                    player["names"]["international"] if player["rel"] == "user" else player["name"]
                     for player in run["players"]["data"]
                 ]
                 e = discord.Embed(
@@ -652,10 +616,7 @@ class SRC(commands.Cog):
                 await channel.send(embed=e)
 
             pagination = data["pagination"]
-            if (
-                not pagination["links"]
-                or "next" not in pagination["links"][-1].values()
-            ):
+            if not pagination["links"] or "next" not in pagination["links"][-1].values():
                 runPending = pagination["size"] + pagination["offset"]
                 break
             offset += 200

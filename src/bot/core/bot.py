@@ -1,18 +1,19 @@
 import os
+from typing import Optional
 
 import aiohttp
-import asqlite
-import config
 import discord
 from discord.ext import commands
 from speedrunpy.client import Client
 
+from .config import Config
 from .context import MMContext
 
+
 extensions = []
-for filename in os.listdir("./cogs"):
+for filename in os.listdir("./exts"):
     if filename.endswith(".py"):
-        extensions.append(f"cogs.{filename[:-3]}")
+        extensions.append(f"src.exts.{filename[:-3]}")
 
 
 class MangoManBot(commands.Bot):
@@ -31,6 +32,23 @@ class MangoManBot(commands.Bot):
         self.session = aiohttp.ClientSession()
 
         self.master = (186713080841895936, 564610598248120320)
+        self._config: Optional[Config] = None
+
+    @property
+    def config(self) -> Config:
+        if not self._config:
+            raise RuntimeError("Config is not set!")
+        return self._config
+
+    def load_config(self, config=None):
+        try:
+            self._config = Config(config.token, config.scylla_hosts, getattr(config, "scylla_port", None))
+        except AttributeError:
+            self._config = Config(
+                os.getenv("DISCORD_TOKEN", ""),
+                os.getenv("SCYLLA_HOSTS", " ").split(" "),
+                int(os.getenv("SCYLLA_PORT", "0")),
+            )
 
     async def get_context(self, message, *, cls=MMContext):
         return await super().get_context(message, cls=cls)
@@ -42,7 +60,7 @@ class MangoManBot(commands.Bot):
             await self.load_extension(extension)
 
     async def run(self):
-        await super().start(config.token, reconnect=True)
+        await super().start(self.config.token, reconnect=True)
 
     async def close(self):
         for extension in extensions:
@@ -55,7 +73,3 @@ class MangoManBot(commands.Bot):
         await self.db.close()
         await self.src.close()
         await self.session.close()
-
-    @property
-    def config(self):
-        return __import__("config")

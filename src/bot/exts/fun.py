@@ -1,11 +1,12 @@
-import discord
 import asyncio
 import json
-import requests
+from random import choice, randint, random
 
+import discord
+import requests
 from discord.errors import Forbidden
 from discord.ext import commands
-from random import choice, randint, random
+
 from .utilities.barter import Piglin
 
 
@@ -20,9 +21,7 @@ class Fun(commands.Cog):
     async def findseed(self, ctx):
         """`Test your Minecraft RNG, but in a bot command`"""
         total_eyes = sum([1 for i in range(12) if randint(1, 10) == 1])
-        await ctx.send(
-            f"{(ctx.message.author.mention)} -> your seed is a {total_eyes} eye"
-        )
+        await ctx.send(f"{(ctx.message.author.mention)} -> your seed is a {total_eyes} eye")
 
     @commands.cooldown(1, 30, commands.BucketType.guild)
     @commands.command(aliases=["vfindseed", "visualfindseed", "vfs"])
@@ -158,34 +157,25 @@ class Fun(commands.Cog):
         rps = ["rock", "paper", "scissors"]
         bot_choice = rps[randint(0, len(rps) - 1)]
 
-        await ctx.send(
-            f"You chose ***{choice.capitalize()}***."
-            + f" I chose ***{bot_choice.capitalize()}***."
-        )
+        await ctx.send(f"You chose ***{choice.capitalize()}***." + f" I chose ***{bot_choice.capitalize()}***.")
         if bot_choice == choice:
             await ctx.send("It's a Tie!")
         elif bot_choice == rps[0]:
 
             def f(x):
-                return {"paper": "Paper wins!", "scissors": "Rock wins!"}.get(
-                    x, "Rock wins!"
-                )
+                return {"paper": "Paper wins!", "scissors": "Rock wins!"}.get(x, "Rock wins!")
 
             result = f(choice)
         elif bot_choice == rps[1]:
 
             def f(x):
-                return {"rock": "Paper wins!", "scissors": "Scissors wins!"}.get(
-                    x, "Paper wins!"
-                )
+                return {"rock": "Paper wins!", "scissors": "Scissors wins!"}.get(x, "Paper wins!")
 
             result = f(choice)
         elif bot_choice == rps[2]:
 
             def f(x):
-                return {"paper": "Scissors wins!", "rock": "Rock wins!"}.get(
-                    x, "Scissors wins!"
-                )
+                return {"paper": "Scissors wins!", "rock": "Rock wins!"}.get(x, "Scissors wins!")
 
             result = f(choice)
         else:
@@ -216,9 +206,7 @@ class Fun(commands.Cog):
         sleepHrs = randint(0, 24)
 
         if sleepHrs == 0:
-            await ctx.send(
-                f"{ctx.author.mention} -> your sleep is 0 hours long - nice try :D"
-            )
+            await ctx.send(f"{ctx.author.mention} -> your sleep is 0 hours long - nice try :D")
         elif sleepHrs <= 5:
             if sleepHrs == 1:
                 s = ""
@@ -233,9 +221,7 @@ class Fun(commands.Cog):
             )
 
     @commands.cooldown(1, 25, type=commands.BucketType.user)
-    @commands.command(
-        aliases=["piglin"], usage="[amount of gold]", example="{prefix}barter 64"
-    )
+    @commands.command(aliases=["piglin"], usage="[amount of gold]", example="{prefix}barter 64")
     async def barter(self, ctx, gold: int = 64):
         """Barter with Minecraft's Piglin. (Based on JE 1.16.1, before nerf)"""
         # limit gold amount up to 2240 (Minecraft inventory limit)
@@ -275,9 +261,7 @@ class Fun(commands.Cog):
             }.get(name, "❔")
 
         e = discord.Embed(
-            title="Bartering with {} gold{}  <a:loading:776255339716673566>".format(
-                gold, "s" if gold > 1 else ""
-            ),
+            title="Bartering with {} gold{}  <a:loading:776255339716673566>".format(gold, "s" if gold > 1 else ""),
             colour=discord.Colour.gold(),
         )
         e.set_author(
@@ -304,9 +288,7 @@ class Fun(commands.Cog):
     async def joke(self, ctx):
         """`Ask the bot a joke and he will tell you a joke that will defenetly make you laugh no cap`"""
         data = requests.get("https://official-joke-api.appspot.com/jokes/random").json()
-        embed = discord.Embed(
-            title=data["setup"], description=data["punchline"], color=0xF4565A
-        )
+        embed = discord.Embed(title=data["setup"], description=data["punchline"], color=0xF4565A)
         await ctx.send(embed=embed)
 
     @commands.cooldown(1, 10, commands.BucketType.user)
@@ -483,12 +465,7 @@ class Fun(commands.Cog):
 
         e = discord.Embed(
             title=f"This is what you got in {attempts} seeds",
-            description="\n".join(
-                [
-                    "**{}** eyes: `{}` seeds".format(k, v)
-                    for k, v in sorted(eyes.items())
-                ]
-            ),
+            description="\n".join(["**{}** eyes: `{}` seeds".format(k, v) for k, v in sorted(eyes.items())]),
             color=discord.Colour(0x349988),
         )
         e.set_author(

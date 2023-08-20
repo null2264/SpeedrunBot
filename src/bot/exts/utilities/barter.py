@@ -31,28 +31,23 @@ class Piglin:
     ]
 
     def __init__(self, gold: int = 64):
-        self.items = [
-            BarterItem(self.weighted_random(self._items)) for i in range(gold)
-        ]
+        self.items = [BarterItem(self.weighted_random(self._items)) for i in range(gold)]
 
     def weighted_random(self, pairs, seed=None):
         total = sum(pair[0] for pair in pairs)
         if seed:
             random.seed(seed)
         r = random.randint(1, total)
-        for (weight, value) in pairs:
+        for weight, value in pairs:
             r -= weight
             if r <= 0:
                 return value
 
     def __str__(self):
-        return ", ".join(
-            ["{}: {}".format(str(item), item.quantity) for item in self.items]
-        )
+        return ", ".join(["{}: {}".format(str(item), item.quantity) for item in self.items])
 
 
 class BarterItem:
-
     # Item Name
     _name = {
         "enchanted-book": "Enchanted Book - Soul Speed",

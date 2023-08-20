@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-
-import discord
 import json
 import os
 import re
 import uuid
-
-
-from discord.ext import commands
 from typing import Union
+
+import discord
+from discord.ext import commands
 
 
 class Starred:
@@ -39,6 +37,7 @@ class StarboardConfig:
         ch = self.bot.get_channel(self.channel_id)
         return ch
 
+
 def is_mod(ctx):
     try:
         return ctx.author.guild_permissions.manage_channels
@@ -47,7 +46,6 @@ def is_mod(ctx):
 
 
 class Stars(commands.Cog):
-
     STAR_COLOUR = 0xFFAC33
 
     def __init__(self, bot):
@@ -61,9 +59,7 @@ class Stars(commands.Cog):
                 conf = json.load(conf)
                 for guildId, data in conf.items():
                     try:
-                        self.starred[guildId] = [
-                            Starred(star[0], star[1]) for star in data["pins"]
-                        ]
+                        self.starred[guildId] = [Starred(star[0], star[1]) for star in data["pins"]]
                     except TypeError:
                         # Old starred format (without bot_message_id, remove soon)
                         self.starred[guildId] = [Starred(star) for star in data["pins"]]
@@ -102,9 +98,7 @@ class Stars(commands.Cog):
 
     @starboard.command()
     @commands.check(is_mod)
-    async def setup(
-        self, ctx, channel: Union[discord.TextChannel, str] = None, amount: int = 5
-    ):
+    async def setup(self, ctx, channel: Union[discord.TextChannel, str] = None, amount: int = 5):
         """`Sets the channel for starboard (Only People with [Administator = True] can use this command)`"""
         if not isinstance(channel, str) and channel.guild.id != ctx.guild.id:
             return
@@ -122,9 +116,7 @@ class Stars(commands.Cog):
         except ValueError:
             pass
 
-        guildConfig["channel"] = (
-            channel.id if isinstance(channel, discord.TextChannel) else 0
-        )
+        guildConfig["channel"] = channel.id if isinstance(channel, discord.TextChannel) else 0
         guildConfig["amount"] = amount
         if "pins" not in guildConfig:
             guildConfig["pins"] = []
@@ -132,17 +124,11 @@ class Stars(commands.Cog):
         # Save config to a json file
         self.save_starboard_config(sbConfig)
 
-        channelMentionOrDisabled = (
-            channel.mention
-            if isinstance(channel, discord.TextChannel)
-            else "`DISABLED`"
-        )
+        channelMentionOrDisabled = channel.mention if isinstance(channel, discord.TextChannel) else "`DISABLED`"
 
         e = discord.Embed(
             title="Starboard Setup",
-            description="Channel: {}\nRequired stars: `{}`".format(
-                channelMentionOrDisabled, amount
-            ),
+            description="Channel: {}\nRequired stars: `{}`".format(channelMentionOrDisabled, amount),
             colour=discord.Colour(self.STAR_COLOUR),
         )
 
@@ -178,9 +164,7 @@ class Stars(commands.Cog):
             if not msg:
                 ch = self.bot.get_channel(payload.channel_id)
                 msg = await ch.fetch_message(msg_id)
-            count = sum(
-                [reaction.count for reaction in msg.reactions if str(reaction) == "⭐"]
-            )
+            count = sum([reaction.count for reaction in msg.reactions if str(reaction) == "⭐"])
             if count >= starboard.amount:
                 await self.star_message(starboard.channel, msg)
 
@@ -203,25 +187,19 @@ class Stars(commands.Cog):
             embed = message.embeds[0]
             if embed.type == "rich":
                 e.add_field(
-                    name="[{}]".format(
-                        embed.title if str(embed.title) != "Embed.Empty" else "\u200B"
-                    ),
+                    name="[{}]".format(embed.title if str(embed.title) != "Embed.Empty" else "\u200B"),
                     value=embed.description or "\u200B",
                     inline=False,
                 )
                 for field in embed.fields:
                     e.add_field(name=field.name, value=field.value, inline=field.inline)
-            if embed.type == "image" and not self.is_url_spoiler(
-                message.content, embed.url
-            ):
+            if embed.type == "image" and not self.is_url_spoiler(message.content, embed.url):
                 e.set_image(url=embed.url)
 
         if message.attachments:
             file = message.attachments[0]
             spoiler = file.is_spoiler()
-            if not spoiler and file.url.lower().endswith(
-                ("png", "jpeg", "jpg", "gif", "webp")
-            ):
+            if not spoiler and file.url.lower().endswith(("png", "jpeg", "jpg", "gif", "webp")):
                 e.set_image(url=file.url)
             elif spoiler:
                 e.add_field(
@@ -251,8 +229,7 @@ class Stars(commands.Cog):
 
         # Save starred message to a json file
         cur[str(message.guild.id)]["pins"] = [
-            (star.id, star.bot_message_id)
-            for star in self.starred[str(message.guild.id)]
+            (star.id, star.bot_message_id) for star in self.starred[str(message.guild.id)]
         ]
         self.save_starboard_config(cur)
 

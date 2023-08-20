@@ -1,15 +1,15 @@
 import asyncio
+import json
+
 import aiohttp
 import backoff
 import discord
-import json
+from dateutil import parser
+from discord.ext import commands, menus, tasks
 
-
-from .utilities.formatting import realtime, pformat
+from .utilities.formatting import pformat, realtime
 from .utilities.paginator import MMReplyMenu
 from .utilities.src import srcGame, srcRequest
-from dateutil import parser
-from discord.ext import commands, tasks, menus
 
 
 class GameList(menus.ListPageSource):
@@ -24,8 +24,7 @@ class GameList(menus.ListPageSource):
         target = self.ctx.message.guild or self.ctx.author
         e = discord.Embed(
             title="{}'s Watchlist".format(target.name),
-            description="\n".join(" • {}".format(game) for game in games)
-            or "No game being watched.",
+            description="\n".join(" • {}".format(game) for game in games) or "No game being watched.",
             colour=discord.Colour.gold(),
         )
         return e
@@ -45,11 +44,7 @@ class RunGet(commands.Cog):
         async def check(ctx):
             if not ctx.guild:
                 return True
-            return (
-                ctx.author.id in ctx.bot.master
-                or ctx.guild.owner_id == ctx.author.id
-                or await original(ctx)
-            )
+            return ctx.author.id in ctx.bot.master or ctx.guild.owner_id == ctx.author.id or await original(ctx)
 
         return commands.check(check)
 
@@ -110,22 +105,16 @@ class RunGet(commands.Cog):
         await self.db.execute("DELETE FROM sent_runs WHERE run_id=?", (run_id,))
         await self.db.commit()
 
-    async def getLeaderboard(
-        self, gameId, categoryId, levelId=None, subcategory: list = []
-    ):
+    async def getLeaderboard(self, gameId, categoryId, levelId=None, subcategory: list = []):
         """Get leaderboard info from speedrun.com"""
         leaderboard = {}
         if levelId:
             leaderboard = await srcRequest(
-                "/leaderboards/{}/level/{}/{}?{}".format(
-                    gameId, levelId, categoryId, "&".join(subcategory)
-                ),
+                "/leaderboards/{}/level/{}/{}?{}".format(gameId, levelId, categoryId, "&".join(subcategory)),
             )
         else:
             leaderboard = await srcRequest(
-                "/leaderboards/{}/category/{}?{}".format(
-                    gameId, categoryId, "&".join(subcategory)
-                ),
+                "/leaderboards/{}/category/{}?{}".format(gameId, categoryId, "&".join(subcategory)),
             )
         return leaderboard
 
@@ -163,14 +152,10 @@ class RunGet(commands.Cog):
                 subcategoryName = []
                 # Get subcategory from run's variables
                 for var in runVars.items():
-                    foundVar = [
-                        c for c in catData["variables"]["data"] if c["id"] == var[0]
-                    ]
+                    foundVar = [c for c in catData["variables"]["data"] if c["id"] == var[0]]
                     if foundVar and foundVar[0]["is-subcategory"]:
                         subcategoryQuery += ["var-{}={}".format(var[0], var[1])]
-                        subcategoryName += [
-                            foundVar[0]["values"]["values"][var[1]]["label"]
-                        ]
+                        subcategoryName += [foundVar[0]["values"]["values"][var[1]]["label"]]
                 categoryID = catData["id"]
                 if catData["type"] == "per-level":
                     levelID = levData["id"]
@@ -195,17 +180,13 @@ class RunGet(commands.Cog):
                     categoryName += " - " + ", ".join(subcategoryName)
 
             players = [
-                player["name"]
-                if player["rel"] == "guest"
-                else player["names"]["international"]
+                player["name"] if player["rel"] == "guest" else player["names"]["international"]
                 for player in run["players"]["data"]
             ]
 
             try:
                 a = discord.Embed(
-                    title="{} by {}".format(
-                        realtime(igt if igt else rta), ", ".join(players)
-                    ),
+                    title="{} by {}".format(realtime(igt if igt else rta), ", ".join(players)),
                     url=link,
                     colour=discord.Color(0xFFFFF0),
                     timestamp=parser.isoparse(playDate),
@@ -221,15 +202,10 @@ class RunGet(commands.Cog):
 
                 await self.addRun(runId)
                 channels = [
-                    ch if ch else user
-                    for user, ch in self.gameIds[run["game"]["data"]["id"]][
-                        "targets"
-                    ].items()
+                    ch if ch else user for user, ch in self.gameIds[run["game"]["data"]["id"]]["targets"].items()
                 ]
                 for targetId in channels:
-                    target = self.bot.get_channel(targetId) or self.bot.get_user(
-                        targetId
-                    )
+                    target = self.bot.get_channel(targetId) or self.bot.get_user(targetId)
                     try:
                         await target.send(embed=a)
                     except discord.Forbidden:
@@ -272,10 +248,7 @@ class RunGet(commands.Cog):
                     title="Already watching '{}'!".format(game.name),
                     colour=discord.Colour.gold(),
                 )
-                if (
-                    not isDM
-                    and channel.id != self.gameIds[game.id]["targets"][targetId]
-                ):
+                if not isDM and channel.id != self.gameIds[game.id]["targets"][targetId]:
                     # TODO: Add ability to replace channel id, use prompt (yes/no)
                     return await ctx.reply(embed=e)
                 return await ctx.reply(embed=e)
@@ -352,11 +325,7 @@ class RunGet(commands.Cog):
         # target id = user id for DM or guild id
         targetId = ctx.author.id if isDM else ctx.message.guild.id
 
-        guildGames = [
-            game["name"]
-            for game in self.gameIds.values()
-            if targetId in game["targets"]
-        ]
+        guildGames = [game["name"] for game in self.gameIds.values() if targetId in game["targets"]]
 
         pages = MMReplyMenu(
             source=GameList(ctx, guildGames),

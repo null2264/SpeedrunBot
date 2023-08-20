@@ -1,11 +1,17 @@
 import sys
 import asyncio
 
+try:
+    import config
+except:
+    config = None
 
-from bot import MangoManBot
+
+from src.bot.core.bot import MangoManBot
 
 
 bot = MangoManBot()
+bot.load_config(config)
 
 
 async def main():

@@ -1,2 +1,4 @@
 # vim: filetype=python
 token = "YOUR_DISCORD_TOKEN"
+scylla_hosts = ["192.0.1.2", "192.0.1.3"]
+scylla_port = 6969

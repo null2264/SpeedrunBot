@@ -1,12 +1,12 @@
 import asyncio
-import discord
-import pytz
 import sys
 import traceback
 
+import discord
+import pytz
+from discord.ext import commands
 
 from .utilities.src import GameNotFound
-from discord.ext import commands
 
 
 class ErrorHandler(commands.Cog):
@@ -52,12 +52,8 @@ class ErrorHandler(commands.Cog):
             return await bot_msg.delete()
 
         else:
-            print(
-                "Ignoring exception in command {}:".format(ctx.command), file=sys.stderr
-            )
-            traceback.print_exception(
-                type(error), error, error.__traceback__, file=sys.stderr
-            )
+            print("Ignoring exception in command {}:".format(ctx.command), file=sys.stderr)
+            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 
 async def setup(bot):

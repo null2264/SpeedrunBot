@@ -4,17 +4,14 @@ import aiohttp
 import backoff
 from discord.ext import commands
 
-from ...context import MMContext
+from ...core.context import MMContext
+
 
 srcRegex = re.compile(r"https?:\/\/(?:www\.)?speedrun\.com\/(\w*)(?:\/.*|\#.*)?")
-srcUserRegex = re.compile(
-    r"https?:\/\/(?:www\.)?speedrun\.com\/user\/(\w*)(?:\/.*|\#.*)?"
-)
+srcUserRegex = re.compile(r"https?:\/\/(?:www\.)?speedrun\.com\/user\/(\w*)(?:\/.*|\#.*)?")
 
 
-@backoff.on_exception(
-    backoff.expo, aiohttp.ClientResponseError, max_tries=3, max_time=60
-)
+@backoff.on_exception(backoff.expo, aiohttp.ClientResponseError, max_tries=3, max_time=60)
 async def srcRequest(query):
     """Request info from speedrun.com.
 
@@ -22,9 +19,7 @@ async def srcRequest(query):
     (Unless the error is 404 or 420 also ignore 200 because its not error)
     """
     async with aiohttp.ClientSession() as session:
-        async with session.get(
-            "https://www.speedrun.com/api/v1{}".format(query)
-        ) as res:
+        async with session.get("https://www.speedrun.com/api/v1{}".format(query)) as res:
             if res.status not in (200, 420, 404):
                 print("D:")
                 raise aiohttp.ClientResponseError(res.request_info, res.history)
@@ -89,9 +84,7 @@ class srcGameLb(commands.Converter):
             argument = match.group(1)
 
         # Embeds that useful for lb command
-        argument += (
-            "?embed=categories.variables,levels.variables,levels.categories.variables"
-        )
+        argument += "?embed=categories.variables,levels.variables,levels.categories.variables"
 
         gameData = await srcRequest("/games/{}".format(argument))
         if not gameData:

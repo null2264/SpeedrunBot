@@ -1,7 +1,8 @@
 import datetime
 from datetime import timedelta
-from pytz import timezone
+
 from discord.ext import commands
+from pytz import timezone
 
 
 class Fair(commands.Cog):
@@ -52,15 +53,11 @@ class Fair(commands.Cog):
                 fairReplyMsg = "{} day {}, streak {}"
                 changed = False
 
-                async with self.db.execute(
-                    "SELECT * FROM fair_streak WHERE user_id = (?)", (userId,)
-                ) as curr:
+                async with self.db.execute("SELECT * FROM fair_streak WHERE user_id = (?)", (userId,)) as curr:
                     row = await curr.fetchone()
                     if row:
                         tz = row[4]
-                        yesterday = str(
-                            datetime.datetime.now(timezone(tz)).date() - timedelta(1)
-                        )
+                        yesterday = str(datetime.datetime.now(timezone(tz)).date() - timedelta(1))
                         # Date from database
                         date = row[1]
                         fairDay = row[2]
@@ -109,11 +106,7 @@ class Fair(commands.Cog):
                         )
                         await self.db.commit()
                         changed = True
-                    fairMsg = (
-                        fairReplyMsg.format(fairMsg, fairDay, fairStreak)
-                        if changed
-                        else fairMsg
-                    )
+                    fairMsg = fairReplyMsg.format(fairMsg, fairDay, fairStreak) if changed else fairMsg
         try:
             await message.channel.send(fairMsg)
         except UnboundLocalError:
@@ -128,9 +121,7 @@ class Fair(commands.Cog):
         userId = ctx.author.id
 
         # Get data from database
-        async with self.db.execute(
-            "SELECT * FROM fair_streak WHERE user_id = (?)", (userId,)
-        ) as curr:
+        async with self.db.execute("SELECT * FROM fair_streak WHERE user_id = (?)", (userId,)) as curr:
             row = await curr.fetchone()
             if not row:
                 return await ctx.send("Try saying 'fair' first!")

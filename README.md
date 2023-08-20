@@ -1,9 +1,10 @@
-# `speedrunComBot`
-**Python 3.8 or Later is required!**
+# `SpeedrunBot`
+**Python 3.10 or Later is required!**
 
 Default Prefix: `mm!`
 
-`speedrunComBot` previously known as `Mango Man Bot`, is a Discord Bot created for Obscure Discord Server to replace [run-get](https://github.com/slashinfty/run-get).
+`SpeedrunBot` (also known as `Mango Man Bot`) is a Discord Bot created for Obscure Discord Server to replace [run-get](https://github.com/slashinfty/run-get).
+Please note that despite the official bot's name being Mango Man Bot, this bot is not created by Mango Man, it's just what Icky decided to use for some reason...
 
 ## Key Feature
 Sends recently verified runs for any games (from speedrun.com) that you pick. (Also works in DM)
@@ -22,6 +23,21 @@ Sends recently verified runs for any games (from speedrun.com) that you pick. (A
   ![Setup Screenshot](assets/screenshot3.png)  
   **TIPS**: Use `""` if the game name have spaces.
 - Done. It'll automatically send newly verified runs every 1 minutes
+
+### Hosting
+> **Note**
+>
+> This bot is not designed to be self-hosted, we will not provide any support on deployment.
+
+TODO
+
+### Environment Variable
+
+| Environment Variable | `config.py`    | Description |
+|----------------------|----------------|-------------|
+| `DISCORD_TOKEN`      | `token`        | [**Required**] The bot's discord token |
+| `SCYLLA_HOSTS`       | `scylla_hosts` | [**Required**] List of ScyllaDB nodes' hostname (**env only**: seperated by spaces) |
+| `SCYLLA_PORT`        | `scylla_port`  | ScyllaDB's node port, will use ScyllaDB standard port if empty |
 
 ## Other Features
 - Get information from speedrun.com (`mm!help SRC`)

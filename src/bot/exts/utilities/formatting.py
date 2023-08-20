@@ -18,14 +18,7 @@ def realtime(time):
     s = "{:02d}".format(s)
     if h > 0:
         m = "{:02d}".format(m)
-    return (
-        ((h > 0) * (str(h) + "h "))
-        + str(m)
-        + "m "
-        + str(s)
-        + "s "
-        + ((str(ms) + "ms") * (ms != "000"))
-    )
+    return ((h > 0) * (str(h) + "h ")) + str(m) + "m " + str(s) + "s " + ((str(ms) + "ms") * (ms != "000"))
 
 
 def joinWithAnd(array: list):

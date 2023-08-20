@@ -1,5 +1,6 @@
-import discord
 from random import choice, randint, random
+
+import discord
 from discord.ext import commands
 
 
@@ -37,9 +38,7 @@ class Moderation(commands.Cog):
             return
 
         else:
-            await member.send(
-                f"You Have been Banned from {ctx.guild.name} for {reason}!"
-            )
+            await member.send(f"You Have been Banned from {ctx.guild.name} for {reason}!")
             await ctx.send(
                 f"{member.mention} {choice(['has been Banned from the server', 'has been brrred from the server', 'has beed bonked from the server'])}!"
             )
@@ -97,9 +96,7 @@ class Moderation(commands.Cog):
         options = list(options)
         for i in range(len(options)):
             options[i] = f"{emojiLetters[i]}  {options[i]}"
-        embed = discord.Embed(
-            title=title, description="\n".join(options), color=0xFF0000
-        )
+        embed = discord.Embed(title=title, description="\n".join(options), color=0xFF0000)
         message = await ctx.send(embed=embed)
         for i in range(len(options)):
             await message.add_reaction(emojiLetters[i])
@@ -107,7 +104,6 @@ class Moderation(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, msg):
-
         filtered_words = {"mm!poll"}
 
         if msg.author == self.bot.user:

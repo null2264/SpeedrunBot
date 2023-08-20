@@ -1,12 +1,13 @@
 import asyncio
-import discord
 import os
 import re
 import sys
-
 from asyncio.subprocess import PIPE, STDOUT
+
+import discord
 from discord.ext import commands, menus
-from cogs.utilities.paginator import MMMenu
+
+from .utilities.paginator import MMMenu
 
 
 SHELL = os.getenv("SHELL") or "/bin/bash"
@@ -127,9 +128,7 @@ class Developer(commands.Cog):
             sequence = (SHELL, "-c", str(command.code))
 
         async def run(shell_command):
-            p = await asyncio.create_subprocess_exec(
-                *shell_command, stdout=PIPE, stderr=STDOUT
-            )
+            p = await asyncio.create_subprocess_exec(*shell_command, stdout=PIPE, stderr=STDOUT)
             stdout, stderr = await p.communicate()
             code = p.returncode
             return ShellResult(code, stdout, stderr)
@@ -155,9 +154,7 @@ class Developer(commands.Cog):
     @commands.command()
     async def pull(self, ctx):
         """Update the bot from github."""
-        await ctx.invoke(
-            self.bot.get_command("sh"), command=CodeBlock("sh", "git pull")
-        )
+        await ctx.invoke(self.bot.get_command("sh"), command=CodeBlock("sh", "git pull"))
 
 
 async def setup(bot):

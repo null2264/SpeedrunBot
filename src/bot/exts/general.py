@@ -1,13 +1,13 @@
-import discord
-import random
-import time
-import re
 import datetime
+import random
+import re
+import time
+from random import randint
 
+import discord
 from discord.errors import Forbidden
 from discord.ext import commands
 from pytz import timezone
-from random import randint
 
 
 class MyHelpCommand(commands.MinimalHelpCommand):
@@ -83,17 +83,13 @@ class General(commands.Cog):
             + f"but rewritten a bit.\n\n**Bot Version**: {bot_ver}",
             inline=False,
         )
-        embed.set_footer(
-            text=f"Requested by {ctx.message.author.name}#{ctx.message.author.discriminator}"
-        )
+        embed.set_footer(text=f"Requested by {ctx.message.author.name}#{ctx.message.author.discriminator}")
         await ctx.send(embed=embed)
 
     @commands.command(name="source")
     async def _source(self, ctx):
         """`Gives my source code repository`"""
-        await ctx.send(
-            "My source code repository: https://github.com/null2264/Mango-Man-Bot"
-        )
+        await ctx.send("My source code repository: https://github.com/null2264/Mango-Man-Bot")
 
     @commands.command(aliases=["ui"], usage="[member]")
     async def userinfo(self, ctx, *, user: discord.Member = None):
@@ -170,20 +166,14 @@ class General(commands.Cog):
         embed.set_thumbnail(url=member.avatar_url)
         embed.add_field(name="ID", value=member.id)
         embed.add_field(name="Guild name", value=member.display_name)
-        embed.add_field(
-            name="Badges", value=" ".join(badges) if badges else "No badge."
-        )
+        embed.add_field(name="Badges", value=" ".join(badges) if badges else "No badge.")
         embed.add_field(
             name="Created on",
-            value=member.created_at.replace(tzinfo=timezone("UTC")).strftime(
-                "%a, %#d %B %Y, %H:%M"
-            ),
+            value=member.created_at.replace(tzinfo=timezone("UTC")).strftime("%a, %#d %B %Y, %H:%M"),
         )
         embed.add_field(
             name="Joined on",
-            value=member.joined_at.replace(tzinfo=timezone("UTC")).strftime(
-                "%a, %#d %B %Y, %H:%M"
-            )
+            value=member.joined_at.replace(tzinfo=timezone("UTC")).strftime("%a, %#d %B %Y, %H:%M")
             if member
             else "Not a member.",
         )
@@ -195,9 +185,7 @@ class General(commands.Cog):
             )
         else:
             embed.add_field(name=f"Roles", value=f"{len(roles)}", inline=False)
-        embed.set_footer(
-            text=f"Requested by {ctx.message.author.name}#{ctx.message.author.discriminator}"
-        )
+        embed.set_footer(text=f"Requested by {ctx.message.author.name}#{ctx.message.author.discriminator}")
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["si"])
@@ -221,9 +209,7 @@ class General(commands.Cog):
         embed.add_field(name="Created on", value=f"{ctx.guild.created_at.date()}")
         embed.add_field(name="Region", value=f"``{ctx.guild.region}``")
         embed.set_thumbnail(url=ctx.guild.icon_url)
-        embed.add_field(
-            name="Verification Level", value=f"{ctx.guild.verification_level}".title()
-        )
+        embed.add_field(name="Verification Level", value=f"{ctx.guild.verification_level}".title())
         embed.add_field(
             name="Channels",
             value="<:categories:747750884577902653>"
@@ -237,10 +223,7 @@ class General(commands.Cog):
         if len(boosters) < 5:
             embed.add_field(
                 name=f"Boosters ({len(boosters)})",
-                value=",\n".join(
-                    ", ".join(boosters[i : i + width])
-                    for i in range(0, len(boosters), width)
-                )
+                value=",\n".join(", ".join(boosters[i : i + width]) for i in range(0, len(boosters), width))
                 if boosters
                 else "No booster.",
             )
@@ -306,9 +289,7 @@ class General(commands.Cog):
         else:
             for bot_owner in owners:
                 await bot_owner.send(f"{ctx.author} has suggested {suggestion}")
-            await ctx.send(
-                "Thank for your suggestion. The owner will review your suggestion"
-            )
+            await ctx.send("Thank for your suggestion. The owner will review your suggestion")
 
     @commands.command()
     async def welcome(self, ctx):

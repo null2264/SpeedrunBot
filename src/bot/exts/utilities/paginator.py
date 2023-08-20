@@ -1,6 +1,4 @@
 import discord
-
-
 from discord.ext import menus
 
 
@@ -51,9 +49,7 @@ class MMReplyMenu(MMMenu):
     async def start(self, ctx):
         if not self.init_msg:
             e = discord.Embed(title="Loading...", colour=discord.Colour.blue())
-            self.init_msg = await ctx.reply(
-                embed=e, mention_author=False if not self.ping else True
-            )
+            self.init_msg = await ctx.reply(embed=e, mention_author=False if not self.ping else True)
         await super().start(ctx)
 
     async def send_initial_message(self, ctx, channel):
@@ -65,9 +61,7 @@ class MMReplyMenu(MMMenu):
 
     async def _get_kwargs_from_page(self, page):
         no_ping = {"mention_author": False if not self.ping else True}
-        value = await discord.utils.maybe_coroutine(
-            self._source.format_page, self, page
-        )
+        value = await discord.utils.maybe_coroutine(self._source.format_page, self, page)
         if isinstance(value, dict):
             return value.update(no_ping)
         elif isinstance(value, str):
