@@ -13,9 +13,9 @@ from .context import MMContext
 
 
 extensions = []
-for filename in os.listdir("./exts"):
+for filename in os.listdir("src/bot/exts"):
     if filename.endswith(".py"):
-        extensions.append(f"bot.exts.{filename[:-3]}")
+        extensions.append(f"src.bot.exts.{filename[:-3]}")
 
 
 class MangoManBot(commands.Bot):
@@ -72,7 +72,10 @@ class MangoManBot(commands.Bot):
             except Exception as e:
                 print(e)
 
-        self.db_session.shutdown()
+        try:
+            self.db_session.shutdown()
+        except AttributeError:
+            pass
         await super().close()
         await self.src.close()
         await self.session.close()

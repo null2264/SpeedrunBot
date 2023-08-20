@@ -47,16 +47,25 @@ class GameSubscribed(Model):
     channel_id = columns.BigInt(primary_key=True, partition_key=True)
 
 
+class FairStreak(Model):
+    user_id = columns.BigInt(primary_key=True)
+    date = columns.Date()
+    day = columns.Integer()
+    streak = columns.Integer()
+    timezone = columns.Text()
+
+
 def sync(config: Config):
     management.create_keyspace_simple(config.scylla_keyspace, 1)
-    management.sync_table(Starred, keyspaces=config.scylla_keyspace)
-    management.sync_table(Star, keyspaces=config.scylla_keyspace)
-    management.sync_table(RunSent, keyspaces=config.scylla_keyspace)
-    management.sync_table(GameSubscribed, keyspaces=config.scylla_keyspace)
+    management.sync_table(Starred, keyspaces=[config.scylla_keyspace])
+    management.sync_table(Star, keyspaces=[config.scylla_keyspace])
+    management.sync_table(RunSent, keyspaces=[config.scylla_keyspace])
+    management.sync_table(GameSubscribed, keyspaces=[config.scylla_keyspace])
+    management.sync_table(FairStreak, keyspaces=[config.scylla_keyspace])
 
 
 def create_session(config: Config):
-    cluster = Cluster()
+    cluster = Cluster(config.scylla_hosts, port=config.scylla_port)
     session = cluster.connect()
 
     # Create keyspace, if already have keyspace your can skip this
