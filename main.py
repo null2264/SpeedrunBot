@@ -1,6 +1,5 @@
 import sys
 import asyncio
-from cassandra.cqlengine import connection
 from dotenv import load_dotenv
 
 try:
