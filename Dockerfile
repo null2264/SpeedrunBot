@@ -28,5 +28,6 @@ WORKDIR /app
 
 COPY --from=builder /venv /venv
 COPY --from=builder /app/src/ /app/src/
+COPY main.y /app/
 
 CMD ["python", "main.py"]
