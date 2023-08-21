@@ -67,7 +67,6 @@ def sync(config: Config):
 
 
 def create_session(config: Config):
-    print(config.scylla_hosts)
     cluster = Cluster(config.scylla_hosts, port=config.scylla_port)
     session = cluster.connect()
 
