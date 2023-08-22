@@ -45,7 +45,7 @@ class GameSubscribed(Model):
     id = columns.Text(primary_key=True)
     name = columns.Text()
     target_id = columns.BigInt(primary_key=True, partition_key=True)
-    channel_id = columns.BigInt(primary_key=True, partition_key=True)
+    channel_id = columns.BigInt(primary_key=True, partition_key=True, default=0)
 
 
 class FairStreak(Model):

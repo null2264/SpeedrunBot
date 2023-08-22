@@ -55,16 +55,6 @@ class RunGet(commands.Cog):
             print("Something went wrong!", exc)
             self.sent_runs = []
 
-        # The new self.games
-        self.gameIds = {}
-        games = await db.GameSubscribed.async_all()
-        for game in games:
-            data = {"name": game.name, "targets": {game.target_id: game.channel_id}}
-            try:
-                self.gameIds[game.id]["targets"].update(data["targets"])
-            except KeyError:
-                self.gameIds[game.id] = data
-
         self.src_update.start()
 
     async def addRun(self, run_id: str):
@@ -101,7 +91,9 @@ class RunGet(commands.Cog):
             return
 
         for run in runs_json["data"]:
-            if run["game"]["data"]["id"] not in self.gameIds.keys():
+            gameId = run["game"]["data"]["id"]
+            gameIds = list(await db.GameSubscribed.objects.filter(id=gameId).async_all())
+            if not gameIds:
                 continue
 
             if run["id"] in self.sent_runs:
@@ -175,8 +167,9 @@ class RunGet(commands.Cog):
 
                 await self.addRun(runId)
                 channels = [
-                    ch if ch else user for user, ch in self.gameIds[run["game"]["data"]["id"]]["targets"].items()
+                    sub.channel_id if sub.channel_id else sub.target_id for sub in gameIds
                 ]
+
                 for targetId in channels:
                     target = self.bot.get_channel(targetId) or self.bot.get_user(targetId)
                     try:
@@ -216,28 +209,19 @@ class RunGet(commands.Cog):
         # target id = user id for DM or guild id
         targetId = ctx.author.id if isDM else ctx.message.guild.id
         try:
-            if targetId in self.gameIds[game.id]["targets"]:
-                e = discord.Embed(
-                    title="Already watching '{}'!".format(game.name),
-                    colour=discord.Colour.gold(),
-                )
-                if not isDM and channel.id != self.gameIds[game.id]["targets"][targetId]:
-                    # TODO: Add ability to replace channel id, use prompt (yes/no)
-                    return await ctx.reply(embed=e)
-                return await ctx.reply(embed=e)
-            raise KeyError
-        except KeyError:
+            target_kwargs = {
+                ("target_id" if isDM else "channel_id"): targetId
+            }
+            target = await db.GameSubscribed.async_get(id=game.id, **target_kwargs)
+            e = discord.Embed(
+                title="Already watching '{}'!".format(game.name),
+                colour=discord.Colour.gold(),
+            )
+            return await ctx.reply(embed=e)
+        except db.GameSubscribed.DoesNotExist:
             await db.GameSubscribed.async_create(
                 id=game.id, name=game.name, target_id=targetId, channel_id=None if isDM else channel.id
             )
-            targetDict = {
-                "name": game.name,
-                "targets": {targetId: None if isDM else channel.id},
-            }
-            try:
-                self.gameIds[game.id]["targets"].update(targetDict["targets"])
-            except KeyError:
-                self.gameIds[game.id] = targetDict
 
             e = discord.Embed(
                 title="'{}' has been added to watchlist".format(game.name),
@@ -255,19 +239,20 @@ class RunGet(commands.Cog):
         # target id = user id for DM or guild id
         targetId = ctx.author.id if isDM else ctx.message.guild.id
 
+        target_kwargs = {
+            ("target_id" if isDM else "channel_id"): targetId
+        }
         try:
-            if targetId not in self.gameIds[game.id]["targets"]:
-                raise KeyError
-        except KeyError:
+            await db.GameSubscribed.async_get(id=game.id, **target_kwargs)
+        except db.GameSubscribed.DoesNotExist:
             e = discord.Embed(
                 title="'{}' is not in the watchlist!".format(game.name),
                 colour=discord.Colour.gold(),
             )
             return await ctx.reply(embed=e)
 
-        sub: db.GameSubscribed = await db.GameSubscribed.async_get(id=game.id, target_id=targetId)
+        sub: db.GameSubscribed = await db.GameSubscribed.async_get(id=game.id, **target_kwargs)
         await sub.async_delete()
-        self.gameIds[game.id]["targets"].pop(targetId)
 
         e = discord.Embed(
             title="'{}' has been removed from watchlist".format(game.name),
@@ -290,7 +275,10 @@ class RunGet(commands.Cog):
         # target id = user id for DM or guild id
         targetId = ctx.author.id if isDM else ctx.message.guild.id
 
-        guildGames = [game["name"] for game in self.gameIds.values() if targetId in game["targets"]]
+        target_kwargs = {
+            ("target_id" if isDM else "channel_id"): targetId
+        }
+        guildGames = list(await db.GameSubscribed.objects.filter(**target_kwargs).async_all())
 
         pages = MMReplyMenu(
             source=GameList(ctx, guildGames),
