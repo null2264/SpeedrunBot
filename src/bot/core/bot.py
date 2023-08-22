@@ -23,14 +23,21 @@ class MangoManBot(commands.Bot):
         db_session: Session
 
     def __init__(self):
+        intents = discord.Intents.none()
+        intents.messages = True  # for Fair and command execution
+        intents.message_content = True  # for Fair and command execution
+        intents.guild_reactions = True  # for starboard
+        intents.guilds = True  # for RunGet
+
         super().__init__(
             command_prefix=["mm!"],
             case_insensitive=True,
-            intents=discord.Intents.all(),
+            intents=intents,
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
                 name=("Over my Mangoes | Prefix mm!"),
             ),
+            member_cache_flags=discord.MemberCacheFlags.none()
         )
 
         self.src = Client()
