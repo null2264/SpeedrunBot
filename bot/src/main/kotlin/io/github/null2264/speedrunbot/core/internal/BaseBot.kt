@@ -9,12 +9,14 @@ import dev.kord.gateway.Intent
 import dev.kord.gateway.PrivilegedIntent
 import io.github.null2264.speedrunbot.core.lib.Extension.hasPrefix
 import io.github.null2264.speedrunbot.core.lib.Extension.string
-import io.ktor.util.reflect.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.callSuspend
 import kotlin.reflect.full.isSubclassOf
 
+/**
+ * Internal for the Bot, handle stuff like starting and stopping the bot.
+ */
 abstract class BaseBot(block: (BaseBot.() -> Unit)? = null) {
     private var _kord: Kord? = null
     private suspend fun kord(): Kord {
@@ -30,25 +32,25 @@ abstract class BaseBot(block: (BaseBot.() -> Unit)? = null) {
     }
 
     // Data
-    internal val _commands = mutableMapOf<String, CommandObj>()
-    val commands: Map<String, CommandObj> get() = _commands
-    internal val _extensions = mutableMapOf<String, BaseModule>()
-    val extensions: Map<String, BaseModule> get() = _extensions
+    private val _commands = mutableMapOf<String, Command>()
+    val commands: Map<String, Command> get() = _commands
+    private val _extensions = mutableMapOf<String, BotModule>()
+    val extensions: Map<String, BotModule> get() = _extensions
     private var prefixes: List<String> = listOf()
 
     // Setter/Getter
-    fun commands(command: CommandObj, name: String? = null) {
+    fun commands(command: Command, name: String? = null) {
         _commands[if (name.isNullOrEmpty()) command.name else name] = command
     }
 
-    fun extensions(vararg extensions: KFunction<BaseModule>) {
+    fun extensions(vararg extensions: KFunction<BotModule>) {
         extensions(extensions.toList())
     }
 
-    fun extensions(extensions: List<KFunction<BaseModule>>) {
+    fun extensions(extensions: List<KFunction<BotModule>>) {
         for (ext in extensions) {
             val kClass = ext.returnType.classifier as KClass<*>
-            if (!kClass.isSubclassOf(BaseModule::class))
+            if (!kClass.isSubclassOf(BotModule::class))
                 continue
 
             ext.call(this).also{ module ->

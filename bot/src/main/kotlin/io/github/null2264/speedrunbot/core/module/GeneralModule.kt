@@ -4,10 +4,10 @@ import dev.kord.core.behavior.edit
 import io.github.null2264.speedrunbot.core.Bot
 import io.github.null2264.speedrunbot.core.internal.annotation.Command
 import io.github.null2264.speedrunbot.core.internal.Context
-import io.github.null2264.speedrunbot.core.internal.BaseModule
+import io.github.null2264.speedrunbot.core.internal.BotModule
 import kotlinx.datetime.Clock
 
-class GeneralModule(override val bot: Bot) : BaseModule(bot, "General", "idk") {
+class GeneralModule(override val bot: Bot) : BotModule(bot, "General", "idk") {
     @Command
     private suspend fun ping(ctx: Context) {
         val startTime = Clock.System.now()
