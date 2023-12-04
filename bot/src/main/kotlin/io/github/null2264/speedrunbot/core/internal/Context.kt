@@ -4,11 +4,11 @@ import dev.kord.core.behavior.channel.createMessage
 import dev.kord.core.entity.Message
 import dev.kord.rest.builder.message.AllowedMentionsBuilder
 import dev.kord.rest.builder.message.create.allowedMentions
+import io.github.null2264.speedrunbot.core.Bot
 
-class Context(private val message: Message, private val pair: Pair<String, String>) {
+class Context(private val bot: Bot, private val message: Message, val prefix: String?, private val _command: String?) {
     val author get() = message.author
-    val prefix get() = pair.first
-    val command get() = pair.second
+    val command get() = bot.commands[_command]
 
     suspend fun send(content: String) = message.channel.createMessage(content)
 
