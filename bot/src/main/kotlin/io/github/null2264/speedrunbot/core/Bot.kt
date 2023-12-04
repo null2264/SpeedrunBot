@@ -10,6 +10,8 @@ import dev.kord.gateway.PrivilegedIntent
 import io.github.null2264.speedrunbot.core.internal.BotModule
 import io.github.null2264.speedrunbot.core.internal.Command
 import io.github.null2264.speedrunbot.core.internal.Context
+import io.github.null2264.speedrunbot.core.internal.error.CommandException
+import io.github.null2264.speedrunbot.core.internal.error.CommandNotFound
 import io.github.null2264.speedrunbot.core.lib.Extension.hasPrefix
 import io.github.null2264.speedrunbot.core.lib.Extension.string
 import kotlin.reflect.KClass
@@ -89,15 +91,19 @@ class Bot(block: (Bot.() -> Unit)? = null) {
         return Context(this, message, candidate?.first, candidate?.second)
     }
 
+    suspend fun onCommandError(context: Context, error: CommandException) {
+        context.send(error.message!!)
+    }
+
     suspend fun processCommand(message: Message) {
         val ctx = getContext(message)
 
         try {
             ctx.command?.let { command ->
                 command.callback.callSuspend(extensions[command.extension], this)
-            } ?: println("Not found")
-        } catch (e: Exception) {
-            println(e)
+            } ?: throw CommandNotFound()
+        } catch (e: CommandException) {
+            onCommandError(ctx, e)
         }
     }
 
