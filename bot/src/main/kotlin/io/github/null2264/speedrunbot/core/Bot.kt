@@ -93,10 +93,9 @@ class Bot(block: (Bot.() -> Unit)? = null) {
         val ctx = getContext(message)
 
         try {
-            if (ctx.command != null)
-                ctx.command!!.callback.callSuspend(extensions[ctx.command!!.extension], this)
-            else
-                println("Not found")
+            ctx.command?.let { command ->
+                command.callback.callSuspend(extensions[command.extension], this)
+            } ?: println("Not found")
         } catch (e: Exception) {
             println(e)
         }
