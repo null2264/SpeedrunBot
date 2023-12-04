@@ -20,4 +20,6 @@ class Context(private val bot: Bot, private val message: Message, val prefix: St
                 AllowedMentionsBuilder().repliedUser
             }
     }
+
+    suspend fun typing() = message.channel.type()
 }

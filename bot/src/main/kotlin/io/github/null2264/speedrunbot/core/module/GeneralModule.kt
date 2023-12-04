@@ -8,14 +8,12 @@ import io.github.null2264.speedrunbot.core.internal.BotModule
 import kotlinx.datetime.Clock
 
 class GeneralModule(override val bot: Bot) : BotModule(bot, "General", "idk") {
-    @Command
+    @Command(description = "Ping the bot!")
     private suspend fun ping(ctx: Context) {
         val startTime = Clock.System.now()
-        val msg = ctx.send("Pong!")
+        ctx.typing()
         val endTime = Clock.System.now()
-        msg.edit {
-            content = "Pong! ${endTime.toEpochMilliseconds() - startTime.toEpochMilliseconds()}ms"
-        }
+        ctx.send("Pong! ${endTime.toEpochMilliseconds() - startTime.toEpochMilliseconds()}ms")
     }
 
     @Command("yep")
