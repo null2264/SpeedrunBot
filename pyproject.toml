@@ -12,7 +12,7 @@ dependencies = [
     "aiohttp==3.7.4",
     "backoff==1.10.0",
     "pytz==2021.1",
-    "uvloop>=0.17.0",
+    "uvloop>=0.18.0",
     "speedrun.py @ git+https://github.com/null2264/speedrun.py",
     "discord.py==2.3.1",
     "discord-ext-menus @ git+https://github.com/Rapptz/discord-ext-menus",
